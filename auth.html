@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="RCMailAI 登录与注册" />
+    <title>RCMailAI - 登录</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="min-h-screen">
+    <nav class="bg-white border-b sticky top-0 z-50 shadow-sm">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="h-16 flex items-center justify-between">
+                <a class="text-xl font-bold text-gray-900 tracking-tight" href="index.html">RC<span class="text-blue-700">MailAI</span></a>
+                <div class="text-sm font-medium space-x-6">
+                    <a class="text-gray-500 hover:text-blue-700" href="index.html">首页</a>
+                    <a class="text-gray-500 hover:text-blue-700" href="generate.html">新建邮件</a>
+                    <a class="text-gray-500 hover:text-blue-700" href="history.html">历史记录</a>
+                    <a class="text-blue-700" href="auth.html">登录</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <section class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                <h1 class="text-2xl font-bold text-gray-900 mb-2">邮箱注册</h1>
+                <p class="text-gray-500 text-sm mb-6">首次使用请先注册，注册后可直接登录。</p>
+
+                <form id="register-form" class="space-y-4">
+                    <div>
+                        <label for="register-email" class="block text-sm font-semibold text-gray-700 mb-2">邮箱</label>
+                        <input id="register-email" type="email" class="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-400" required />
+                    </div>
+                    <div>
+                        <label for="register-password" class="block text-sm font-semibold text-gray-700 mb-2">密码</label>
+                        <input id="register-password" type="password" minlength="6" class="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-400" required />
+                    </div>
+                    <button type="submit" class="w-full bg-blue-700 text-white px-4 py-3 rounded-lg font-semibold hover:bg-blue-800 transition">注册并进入</button>
+                </form>
+            </section>
+
+            <section class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                <h2 class="text-2xl font-bold text-gray-900 mb-2">邮箱登录</h2>
+                <p class="text-gray-500 text-sm mb-6">已有账号请直接登录。</p>
+
+                <form id="login-form" class="space-y-4">
+                    <div>
+                        <label for="login-email" class="block text-sm font-semibold text-gray-700 mb-2">邮箱</label>
+                        <input id="login-email" type="email" class="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-400" required />
+                    </div>
+                    <div>
+                        <label for="login-password" class="block text-sm font-semibold text-gray-700 mb-2">密码</label>
+                        <input id="login-password" type="password" class="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-400" required />
+                    </div>
+                    <button type="submit" class="w-full bg-gray-900 text-white px-4 py-3 rounded-lg font-semibold hover:bg-black transition">登录并进入</button>
+                </form>
+
+                <button id="logout-btn" class="w-full mt-4 border border-gray-300 text-gray-700 px-4 py-3 rounded-lg font-semibold hover:bg-gray-50 transition" type="button">退出当前登录</button>
+            </section>
+        </div>
+
+        <p id="auth-status" class="hidden mt-6 text-sm"></p>
+    </main>
+
+    <script src="auth.js"></script>
+</body>
+</html>

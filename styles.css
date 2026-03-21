@@ -1,0 +1,43 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700&display=swap');
+
+:root {
+    --brand-900: #0f2f76;
+    --brand-700: #1d4ed8;
+    --brand-500: #3b82f6;
+    --ink-900: #0f172a;
+    --ink-500: #64748b;
+    --surface: #f8fafc;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: 'Inter', 'Noto Sans SC', sans-serif;
+    background:
+        radial-gradient(circle at 10% 5%, rgba(59, 130, 246, 0.08), transparent 32%),
+        radial-gradient(circle at 90% 0%, rgba(30, 58, 138, 0.08), transparent 25%),
+        var(--surface);
+    color: var(--ink-900);
+}
+
+.gradient-bg {
+    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+}
+
+.template-card {
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.template-card:hover {
+    transform: translateY(-2px);
+}
+
+@media (max-width: 767px) {
+    .mobile-scroll-fix {
+        max-height: calc(100vh - 64px);
+        overflow-y: auto;
+    }
+}

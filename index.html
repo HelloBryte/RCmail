@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="RCMailAI 中俄商务邮件助手，帮助外贸从业者快速生成专业商务邮件。" />
+    <title>RCMailAI - 首页</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="min-h-screen">
+    <nav class="bg-white border-b sticky top-0 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center space-x-2">
+                    <span class="iconify text-3xl text-blue-800" data-icon="mdi:email-fast"></span>
+                    <span class="text-xl font-bold text-gray-900 tracking-tight">RC<span class="text-blue-700">MailAI</span></span>
+                </div>
+
+                <div class="hidden md:flex space-x-8 items-center text-sm font-medium">
+                    <a class="text-blue-700 border-b-2 border-blue-700 pb-1" href="index.html">首页</a>
+                    <a class="text-gray-500 hover:text-blue-700 transition" href="generate.html">新建邮件</a>
+                    <a class="text-gray-500 hover:text-blue-700 transition" href="history.html">历史记录</a>
+                    <a class="text-gray-500 hover:text-blue-700 transition" href="auth.html">登录</a>
+                </div>
+
+                <div class="flex items-center space-x-3">
+                    <div class="text-right mr-2 hidden lg:block">
+                        <p class="text-xs text-gray-400">当前日期</p>
+                        <p class="text-sm font-semibold text-gray-600" id="current-date">2026年3月14日</p>
+                    </div>
+
+                    <button id="mobile-menu-toggle" class="md:hidden inline-flex items-center justify-center p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50" aria-label="打开导航菜单" aria-expanded="false">
+                        <span class="iconify text-xl" data-icon="mdi:menu"></span>
+                    </button>
+
+                    <a class="hidden md:inline-flex items-center space-x-2 bg-gray-100 px-3 py-1.5 rounded-full hover:bg-gray-200 transition" href="auth.html" aria-label="登录或注册">
+                        <span class="iconify text-xl" data-icon="mdi:account-circle"></span>
+                        <span class="text-sm text-gray-700">登录 / 注册</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div id="mobile-menu" class="hidden md:hidden border-t bg-white mobile-scroll-fix">
+            <div class="px-4 py-3 space-y-3 text-sm font-medium">
+                <a class="block text-blue-700" href="index.html">首页</a>
+                <a class="block text-gray-600 hover:text-blue-700" href="generate.html">新建邮件</a>
+                <a class="block text-gray-600 hover:text-blue-700" href="history.html">历史记录</a>
+                <a class="block text-gray-600 hover:text-blue-700" href="auth.html">登录</a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="gradient-bg text-white py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="max-w-3xl" data-reveal>
+                    <h1 class="text-4xl md:text-5xl font-extrabold leading-tight mb-6">跨越语言障碍，<br />开启中俄贸易新篇章</h1>
+                    <p class="text-lg text-blue-100 mb-8 opacity-90">基于最新的 AI 语言模型，专为中俄外贸从业者打造。一键生成地道、专业的商务俄语邮件，支持 24 小时实时汇率与商务礼仪校对。</p>
+                    <div class="flex flex-wrap gap-4">
+                        <a class="bg-white text-blue-800 px-8 py-3 rounded-lg font-bold hover:bg-blue-50 transition shadow-lg" href="generate.html">开始编写</a>
+                        <a class="border border-white/40 bg-white/10 backdrop-blur-sm px-8 py-3 rounded-lg font-bold hover:bg-white/20 transition" href="#templates">浏览模板</a>
+                    </div>
+                    <div class="mt-8 flex flex-wrap items-center gap-4 text-sm text-blue-100/80">
+                        <div class="flex items-center"><span class="iconify mr-2" data-icon="mdi:check-circle"></span>专业商务术语</div>
+                        <div class="flex items-center"><span class="iconify mr-2" data-icon="mdi:check-circle"></span>实时双语对照</div>
+                        <div class="flex items-center"><span class="iconify mr-2" data-icon="mdi:check-circle"></span>符合俄区习惯</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16" id="templates">
+        <div class="mb-10 flex flex-col md:flex-row md:justify-between md:items-end gap-4" data-reveal>
+            <div>
+                <h2 class="text-3xl font-bold text-gray-900">邮件模板库</h2>
+                <p class="text-gray-500 mt-2">覆盖中俄商务沟通全场景，选择合适的模板开始撰写</p>
+            </div>
+            <a class="text-blue-700 font-semibold flex items-center hover:underline" href="generate.html">
+                进入完整模板页 <span class="iconify ml-1" data-icon="mdi:chevron-right"></span>
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+            <a class="template-card group bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-blue-300" data-reveal href="generate.html?type=exhibition">
+                <div class="w-12 h-12 bg-blue-50 text-blue-700 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                    <span class="iconify text-2xl" data-icon="mdi:island"></span>
+                </div>
+                <h3 class="text-lg font-bold text-gray-800 mb-2">展会邀请</h3>
+                <p class="text-sm text-gray-500 leading-relaxed mb-4">包含莫斯科家具展、工业展等大型展会邀约话术。</p>
+                <div class="flex items-center text-xs text-blue-600 font-medium">12 个细分模板 <span class="iconify ml-1" data-icon="mdi:arrow-right"></span></div>
+            </a>
+
+            <a class="template-card group bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-blue-300" data-reveal href="generate.html?type=cooperation">
+                <div class="w-12 h-12 bg-teal-50 text-teal-700 rounded-lg flex items-center justify-center mb-4 group-hover:bg-teal-600 group-hover:text-white transition-colors">
+                    <span class="iconify text-2xl" data-icon="mdi:handshake"></span>
+                </div>
+                <h3 class="text-lg font-bold text-gray-800 mb-2">合作洽谈</h3>
+                <p class="text-sm text-gray-500 leading-relaxed mb-4">首次联系、询价回复、代理授权申请及报价。</p>
+                <div class="flex items-center text-xs text-teal-600 font-medium">24 个细分模板 <span class="iconify ml-1" data-icon="mdi:arrow-right"></span></div>
+            </a>
+
+            <a class="template-card group bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-blue-300" data-reveal href="generate.html?type=followup">
+                <div class="w-12 h-12 bg-orange-50 text-orange-700 rounded-lg flex items-center justify-center mb-4 group-hover:bg-orange-600 group-hover:text-white transition-colors">
+                    <span class="iconify text-2xl" data-icon="mdi:calendar-clock"></span>
+                </div>
+                <h3 class="text-lg font-bold text-gray-800 mb-2">客户跟进</h3>
+                <p class="text-sm text-gray-500 leading-relaxed mb-4">节假日问候、样品邮寄反馈、项目进度同步。</p>
+                <div class="flex items-center text-xs text-orange-600 font-medium">18 个细分模板 <span class="iconify ml-1" data-icon="mdi:arrow-right"></span></div>
+            </a>
+
+            <a class="template-card group bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-blue-300" data-reveal href="generate.html?type=aftersale">
+                <div class="w-12 h-12 bg-purple-50 text-purple-700 rounded-lg flex items-center justify-center mb-4 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                    <span class="iconify text-2xl" data-icon="mdi:face-agent"></span>
+                </div>
+                <h3 class="text-lg font-bold text-gray-800 mb-2">售后服务</h3>
+                <p class="text-sm text-gray-500 leading-relaxed mb-4">退换货沟通、质量投诉处理、满意度调查。</p>
+                <div class="flex items-center text-xs text-purple-600 font-medium">15 个细分模板 <span class="iconify ml-1" data-icon="mdi:arrow-right"></span></div>
+            </a>
+
+            <a class="template-card group bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-blue-300" data-reveal href="generate.html?type=payment">
+                <div class="w-12 h-12 bg-red-50 text-red-700 rounded-lg flex items-center justify-center mb-4 group-hover:bg-red-600 group-hover:text-white transition-colors">
+                    <span class="iconify text-2xl" data-icon="mdi:currency-usd-off"></span>
+                </div>
+                <h3 class="text-lg font-bold text-gray-800 mb-2">催款提醒</h3>
+                <p class="text-sm text-gray-500 leading-relaxed mb-4">友好提醒、逾期警告、法律程序声明模板。</p>
+                <div class="flex items-center text-xs text-red-600 font-medium">8 个细分模板 <span class="iconify ml-1" data-icon="mdi:arrow-right"></span></div>
+            </a>
+        </div>
+    </section>
+
+    <footer class="bg-gray-900 text-gray-400 pt-16 pb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-12 mb-12">
+                <div class="col-span-2" data-reveal>
+                    <div class="flex items-center space-x-2 text-white mb-6">
+                        <span class="iconify text-3xl" data-icon="mdi:email-fast"></span>
+                        <span class="text-xl font-bold tracking-tight">RC<span class="text-blue-500">MailAI</span></span>
+                    </div>
+                    <p class="max-w-xs mb-6 text-sm">领先的中俄商务通讯协作平台，致力于消弭语言鸿沟，助力中国品牌走向世界。成立于2024年。</p>
+                    <p class="text-sm text-gray-500">商务合作：support@rcmailai.com</p>
+                </div>
+                <div data-reveal>
+                    <h4 class="text-white font-bold mb-6">产品中心</h4>
+                    <ul class="space-y-4 text-sm">
+                        <li><a class="hover:text-white" href="generate.html">新建邮件</a></li>
+                        <li><a class="hover:text-white" href="#templates">模板库</a></li>
+                    </ul>
+                </div>
+                <div data-reveal>
+                    <h4 class="text-white font-bold mb-6">服务支持</h4>
+                    <ul class="space-y-4 text-sm">
+                        <li><a class="hover:text-white" href="history.html">历史记录</a></li>
+                        <li><a class="hover:text-white" href="mailto:support@rcmailai.com">联系我们</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center text-xs">
+                <p>© 2026 RCMailAI Inc. 保留所有权利。</p>
+                <div class="flex space-x-6 mt-4 md:mt-0">
+                    <span>备案号：沪ICP备88888888号</span>
+                    <span>上海市浦东新区张江高科技园区</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="main.js"></script>
+</body>
+</html>
