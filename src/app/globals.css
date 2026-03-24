@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #f8f7f3;
+  --surface: #fffdf7;
+  --ink: #1f2a37;
+  --muted: #5e6a79;
+  --line: #d2cbbf;
+  --brand: #b34a2d;
+  --brand-2: #2d6a7f;
+}
+
+@theme inline {
+  --color-background: var(--bg);
+  --color-foreground: var(--ink);
+  --font-sans: var(--font-noto-sans-sc);
+  --font-mono: var(--font-space-grotesk);
+}
+
+body {
+  background:
+    radial-gradient(circle at 12% 8%, color-mix(in oklab, var(--brand) 13%, white) 0%, transparent 35%),
+    radial-gradient(circle at 88% 14%, color-mix(in oklab, var(--brand-2) 15%, white) 0%, transparent 38%),
+    linear-gradient(180deg, #fcfbf7 0%, #f4f0e7 100%);
+  color: var(--ink);
+  font-family: var(--font-noto-sans-sc), sans-serif;
+}
+
+.card-surface {
+  background: color-mix(in oklab, var(--surface) 95%, white);
+  border: 1px solid color-mix(in oklab, var(--line) 84%, white);
+  box-shadow:
+    0 12px 30px -22px rgba(31, 42, 55, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+.section-title {
+  font-family: var(--font-space-grotesk), sans-serif;
+  letter-spacing: -0.02em;
+}
+
+.fade-up {
+  animation: fadeUp 0.45s ease-out both;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
