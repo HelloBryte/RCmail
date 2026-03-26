@@ -7,6 +7,7 @@ import {
   type UIMessage,
 } from "ai";
 import { buildAgentTools } from "@/lib/agent/tools";
+import { trackEvent } from "@/lib/analytics/track-event";
 
 const openrouter = createOpenRouter({
   apiKey: process.env.OPENROUTER_API_KEY,
@@ -17,17 +18,46 @@ const openRouterModel = process.env.OPENROUTER_MODEL ?? "stepfun/step-3.5-flash:
 export const maxDuration = 60;
 
 export async function POST(req: Request) {
+  const startTime = Date.now();
+  const userAgent = req.headers.get("user-agent") ?? undefined;
   const { userId } = await auth();
 
   if (!userId) {
+    await trackEvent({
+      eventName: "chat_unauthorized",
+      route: "/api/chat",
+      statusCode: 401,
+      responseMs: Date.now() - startTime,
+      userAgent,
+      details: "Missing authenticated user",
+    });
     return new Response("Unauthorized", { status: 401 });
   }
 
   const body = (await req.json()) as { messages?: UIMessage[] };
 
   if (!body.messages || !Array.isArray(body.messages)) {
+    await trackEvent({
+      eventName: "chat_bad_request",
+      route: "/api/chat",
+      userId,
+      statusCode: 400,
+      responseMs: Date.now() - startTime,
+      userAgent,
+      details: "messages field missing or invalid",
+    });
     return new Response("Invalid request body", { status: 400 });
   }
+
+  await trackEvent({
+    eventName: "chat_generation_requested",
+    route: "/api/chat",
+    userId,
+    statusCode: 200,
+    responseMs: Date.now() - startTime,
+    userAgent,
+    details: `messageCount=${body.messages.length}`,
+  });
 
   const result = streamText({
     model: openrouter(openRouterModel),
