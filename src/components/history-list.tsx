@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 type HistoryItem = {
   id: string;
+  emailType: string;
   subject: string;
   recipient: string;
   tone: string;
@@ -65,7 +66,7 @@ export function HistoryList() {
             </button>
           </div>
           <p className="mt-1 text-xs text-[var(--muted)]">
-            收件人: {item.recipient} · 语气: {item.tone}
+            类型: {item.emailType} · 收件人: {item.recipient} · 语气: {item.tone}
           </p>
           <p className="mt-3 text-sm text-[var(--muted)]">中文输入: {item.chineseInput}</p>
           <p className="mt-2 whitespace-pre-wrap rounded-xl bg-white/70 p-3 text-sm text-[var(--ink)]">

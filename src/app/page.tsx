@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MAIL_TYPES } from "@/lib/mail-types";
 
 export default function Home() {
   return (
@@ -6,7 +7,7 @@ export default function Home() {
       <header className="fade-up mb-12 flex items-center justify-between">
         <div>
           <p className="section-title text-sm uppercase tracking-[0.22em] text-[var(--muted)]">RCmail AI</p>
-          <h1 className="section-title mt-1 text-2xl font-semibold sm:text-3xl">中文信息生成俄语商务邮件</h1>
+            <h1 className="section-title mt-1 text-2xl font-semibold sm:text-3xl">中俄商务邮件模板写作</h1>
         </div>
         <div className="flex items-center gap-3">
           <Link
@@ -32,10 +33,10 @@ export default function Home() {
             </p>
             <h2 className="section-title max-w-2xl text-3xl font-semibold leading-tight sm:text-5xl">
               从中文描述到俄语可发送邮件，
-              <span className="text-[var(--brand)]">一个 Agent 全流程完成。</span>
+              <span className="text-[var(--brand)]">按模板快速产出。</span>
             </h2>
             <p className="mt-5 max-w-2xl text-base leading-8 text-[var(--muted)] sm:text-lg">
-              输入中文背景，系统自动生成俄语主题、正文、结尾，并可由内置 Agent 调用网站能力保存草稿、维护历史、管理偏好。
+              选择常见商务场景模板，填写收件人、沟通目的与补充要点，系统自动生成符合俄罗斯商务礼仪的完整邮件。
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
@@ -54,14 +55,17 @@ export default function Home() {
           </div>
 
           <div className="rounded-2xl border border-[var(--line)] bg-gradient-to-br from-white/95 to-[#f1ece1] p-5">
-            <p className="section-title text-sm font-medium text-[var(--muted)]">示例预览</p>
-            <div className="mt-3 space-y-3 text-sm">
-              <p className="rounded-xl bg-white px-3 py-2 text-[var(--ink)]">
-                中文输入：给伊万写一封正式合作确认邮件，表达感谢并约下周二会议。
-              </p>
-              <p className="rounded-xl bg-[color-mix(in_oklab,var(--brand-2)_10%,white)] px-3 py-2 text-[var(--ink)]">
-                Русское письмо: Уважаемый Иван, благодарю вас за сотрудничество...
-              </p>
+            <p className="section-title text-sm font-medium text-[var(--muted)]">常用邮件类型</p>
+            <div className="mt-3 space-y-2 text-sm">
+              {MAIL_TYPES.map((item) => (
+                <Link
+                  key={item.slug}
+                  href={`/compose/${item.slug}`}
+                  className="block rounded-xl bg-white px-3 py-2 text-[var(--ink)] transition hover:bg-[color-mix(in_oklab,var(--brand-2)_12%,white)]"
+                >
+                  {item.title}
+                </Link>
+              ))}
             </div>
           </div>
         </div>

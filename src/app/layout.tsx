@@ -15,7 +15,7 @@ const spaceGrotesk = Space_Grotesk({
 
 export const metadata: Metadata = {
   title: "RCmail AI",
-  description: "中文信息一键生成俄语邮件，内置可操作网站数据层的智能 Agent。",
+  description: "中文信息快速生成俄语商务邮件，覆盖展会邀请、跟进、洽谈、售后与催款模板。",
 };
 
 export default function RootLayout({
