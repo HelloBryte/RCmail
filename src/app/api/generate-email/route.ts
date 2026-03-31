@@ -5,7 +5,7 @@ import { getDb } from "@/lib/db";
 import { emails, userPlans } from "@/lib/db/schema";
 import { isMailTypeSlug, type MailTypeSlug } from "@/lib/mail-types";
 import { buildUserPrompt } from "@/lib/prompts";
-import { generateBusinessMailFromQwen } from "@/lib/qwen";
+import { splitSubjectAndBody, streamBusinessMailFromQwen } from "@/lib/qwen";
 
 type Tone = "formal" | "friendly" | "firm";
 
@@ -78,51 +78,93 @@ export async function POST(req: Request) {
     tone: body.tone,
   });
 
-  const generated = await generateBusinessMailFromQwen(prompt);
+  const qwenStream = await streamBusinessMailFromQwen(prompt);
 
-  const [savedEmail] = await db
-    .insert(emails)
-    .values({
-      userId,
-      emailType: body.mailType,
-      subject: generated.subject,
-      recipient: body.recipient,
-      tone: body.tone,
-      chineseInput: `purpose=${body.purpose}; details=${body.details}`,
-      russianOutput: generated.body,
-      updatedAt: new Date(),
-    })
-    .returning();
+  const encoder = new TextEncoder();
+  let fullText = "";
 
-  let updatedPlan = plan;
-  if (plan.planType === "personal") {
-    const [updated] = await db
-      .update(userPlans)
-      .set({ trialUsed: sql`${userPlans.trialUsed} + 1`, updatedAt: new Date() })
-      .where(and(eq(userPlans.userId, userId), eq(userPlans.planType, "personal")))
-      .returning();
+  const sseStream = new ReadableStream({
+    async start(controller) {
+      const reader = qwenStream.getReader();
+      try {
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          fullText += value;
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "chunk", delta: value })}\n\n`));
+        }
+      } catch {
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "error", message: "生成失败" })}\n\n`));
+        controller.close();
+        return;
+      } finally {
+        reader.releaseLock();
+      }
 
-    if (updated) {
-      updatedPlan = updated;
-    }
-  }
+      try {
+        const generated = splitSubjectAndBody(fullText);
 
-  await trackEvent({
-    eventName: "generate_success",
-    route,
-    userId,
-    statusCode: 200,
-    responseMs: Date.now() - startTime,
-    userAgent,
-    details: `mailType=${body.mailType};plan=${updatedPlan.planType};trialUsed=${updatedPlan.trialUsed}`,
+        const [savedEmail] = await db
+          .insert(emails)
+          .values({
+            userId,
+            emailType: body.mailType,
+            subject: generated.subject,
+            recipient: body.recipient,
+            tone: body.tone,
+            chineseInput: `purpose=${body.purpose}; details=${body.details}`,
+            russianOutput: generated.body,
+            updatedAt: new Date(),
+          })
+          .returning();
+
+        let updatedPlan = plan;
+        if (plan.planType === "personal") {
+          const [updated] = await db
+            .update(userPlans)
+            .set({ trialUsed: sql`${userPlans.trialUsed} + 1`, updatedAt: new Date() })
+            .where(and(eq(userPlans.userId, userId), eq(userPlans.planType, "personal")))
+            .returning();
+
+          if (updated) updatedPlan = updated;
+        }
+
+        await trackEvent({
+          eventName: "generate_success",
+          route,
+          userId,
+          statusCode: 200,
+          responseMs: Date.now() - startTime,
+          userAgent,
+          details: `mailType=${body.mailType};plan=${updatedPlan.planType};trialUsed=${updatedPlan.trialUsed}`,
+        });
+
+        controller.enqueue(
+          encoder.encode(
+            `data: ${JSON.stringify({
+              type: "done",
+              email: savedEmail,
+              plan: {
+                type: updatedPlan.planType,
+                trialUsed: updatedPlan.trialUsed,
+                trialRemaining: updatedPlan.planType === "personal" ? Math.max(0, PERSONAL_LIMIT - updatedPlan.trialUsed) : null,
+              },
+            })}\n\n`
+          )
+        );
+      } catch {
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "error", message: "保存失败" })}\n\n`));
+      }
+
+      controller.close();
+    },
   });
 
-  return Response.json({
-    email: savedEmail,
-    plan: {
-      type: updatedPlan.planType,
-      trialUsed: updatedPlan.trialUsed,
-      trialRemaining: updatedPlan.planType === "personal" ? Math.max(0, PERSONAL_LIMIT - updatedPlan.trialUsed) : null,
+  return new Response(sseStream, {
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
     },
   });
 }

@@ -41,6 +41,8 @@ export default function ComposePage({ params }: { params: Promise<{ mailType: st
     event.preventDefault();
     setBusy(true);
     setError("");
+    setMailSubject("");
+    setMailBody("");
 
     try {
       const res = await fetch("/api/generate-email", {
@@ -66,10 +68,34 @@ export default function ComposePage({ params }: { params: Promise<{ mailType: st
         throw new Error("生成失败，请稍后再试");
       }
 
-      const data = await res.json();
-      setMailSubject(data?.email?.subject ?? "");
-      setMailBody(data?.email?.russianOutput ?? "");
-      setPlan(data?.plan ?? null);
+      const reader = res.body!.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+        for (const line of lines) {
+          if (!line.startsWith("data:")) continue;
+          const jsonStr = line.slice(5).trim();
+          if (!jsonStr) continue;
+          try {
+            const ev = JSON.parse(jsonStr);
+            if (ev.type === "chunk") {
+              setMailBody((prev) => prev + ev.delta);
+            } else if (ev.type === "done") {
+              setMailSubject(ev.email?.subject ?? "");
+              setMailBody(ev.email?.russianOutput ?? "");
+              setPlan(ev.plan ?? null);
+            } else if (ev.type === "error") {
+              setError(ev.message ?? "生成失败");
+            }
+          } catch { /* ignore malformed events */ }
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "请求失败");
     } finally {
