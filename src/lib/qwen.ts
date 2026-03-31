@@ -12,7 +12,10 @@ type QwenResult = {
 
 function extractTextFromDashscope(payload: any): string {
   const content = payload?.output?.choices?.[0]?.message?.content;
-  if (typeof content === "string") return content;
+  if (typeof content === "string") {
+    // Strip Qwen3 thinking tokens <think>...</think>
+    return content.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+  }
   return "";
 }
 
@@ -55,7 +58,7 @@ export async function generateBusinessMailFromQwen(userPrompt: string): Promise<
     body: JSON.stringify({
       model,
       input: { messages },
-      parameters: { result_format: "message" },
+      parameters: { result_format: "message", enable_thinking: false },
     }),
   });
 

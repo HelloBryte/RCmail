@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { type FormEvent, useMemo, useState } from "react";
+import { type FormEvent, use, useMemo, useState } from "react";
 import { getMailTypeBySlug, isMailTypeSlug, type MailTypeSlug } from "@/lib/mail-types";
 
 type PlanInfo = {
@@ -10,7 +10,8 @@ type PlanInfo = {
   trialRemaining: number | null;
 };
 
-export default function ComposePage({ params }: { params: { mailType: string } }) {
+export default function ComposePage({ params }: { params: Promise<{ mailType: string }> }) {
+  const { mailType } = use(params);
   const [recipient, setRecipient] = useState("");
   const [purpose, setPurpose] = useState("");
   const [details, setDetails] = useState("");
@@ -21,7 +22,7 @@ export default function ComposePage({ params }: { params: { mailType: string } }
   const [mailBody, setMailBody] = useState("");
   const [plan, setPlan] = useState<PlanInfo | null>(null);
 
-  const type = useMemo(() => (isMailTypeSlug(params.mailType) ? (params.mailType as MailTypeSlug) : null), [params.mailType]);
+  const type = useMemo(() => (isMailTypeSlug(mailType) ? (mailType as MailTypeSlug) : null), [mailType]);
 
   if (!type) {
     return (
