@@ -39,7 +39,7 @@ export async function streamBusinessMailFromQwen(userPrompt: string): Promise<Re
   const apiKey = process.env.DASHSCOPE_API_KEY;
   if (!apiKey) throw new Error("DASHSCOPE_API_KEY is required");
 
-  const model = process.env.QWEN_MODEL ?? "qwen3.5-flash";
+  const model = process.env.QWEN_MODEL ?? "qwen3-8b";
   const messages: Message[] = [
     { role: "system", content: BASE_SYSTEM_PROMPT },
     { role: "user", content: userPrompt },
@@ -106,7 +106,7 @@ export async function generateBusinessMailFromQwen(userPrompt: string): Promise<
     throw new Error("DASHSCOPE_API_KEY is required");
   }
 
-  const model = process.env.QWEN_MODEL ?? "qwen3.5-flash";
+  const model = process.env.QWEN_MODEL ?? "qwen3-8b";
 
   const messages: Message[] = [
     { role: "system", content: BASE_SYSTEM_PROMPT },
