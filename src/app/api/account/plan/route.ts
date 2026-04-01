@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
+import { getCustomerInfo } from "@/lib/ezboti";
 import { getDb } from "@/lib/db";
 import { userPlans } from "@/lib/db/schema";
 
@@ -12,16 +13,30 @@ export async function GET() {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const db = getDb();
-  const [plan] = await db.select().from(userPlans).where(eq(userPlans.userId, userId)).limit(1);
+  const [ezInfo, dbResult] = await Promise.allSettled([
+    getCustomerInfo(userId),
+    getDb().select().from(userPlans).where(eq(userPlans.userId, userId)).limit(1),
+  ]);
 
-  if (!plan) {
-    return Response.json({ type: "personal", trialUsed: 0, trialRemaining: PERSONAL_LIMIT });
+  const ez = ezInfo.status === "fulfilled" ? ezInfo.value : null;
+  const plan = dbResult.status === "fulfilled" ? dbResult.value[0] : null;
+
+  if (ez?.isBusiness) {
+    return Response.json({
+      type: "business",
+      trialUsed: plan?.trialUsed ?? 0,
+      trialRemaining: null,
+      expireAt: ez.expireAt,
+      paywallUrl: ez.paywallUrl,
+    });
   }
 
+  const trialUsed = plan?.trialUsed ?? 0;
   return Response.json({
-    type: plan.planType,
-    trialUsed: plan.trialUsed,
-    trialRemaining: plan.planType === "personal" ? Math.max(0, PERSONAL_LIMIT - plan.trialUsed) : null,
+    type: "personal",
+    trialUsed,
+    trialRemaining: Math.max(0, PERSONAL_LIMIT - trialUsed),
+    expireAt: null,
+    paywallUrl: ez?.paywallUrl ?? "",
   });
 }
