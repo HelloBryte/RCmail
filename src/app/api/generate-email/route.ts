@@ -3,7 +3,6 @@ import { and, eq, sql } from "drizzle-orm";
 import { trackEvent } from "@/lib/analytics/track-event";
 import { getDb } from "@/lib/db";
 import { emails, userPlans } from "@/lib/db/schema";
-import { getCustomerInfo } from "@/lib/ezboti";
 import { isMailTypeSlug, type MailTypeSlug } from "@/lib/mail-types";
 import { buildUserPrompt } from "@/lib/prompts";
 import { splitSubjectAndBody, streamBusinessMailFromQwen } from "@/lib/qwen";
@@ -40,14 +39,7 @@ export async function POST(req: Request) {
 
   const db = getDb();
 
-  // Check Business status via ezboti, fall back to DB trial tracking
-  const [ezInfo, existingPlanResult] = await Promise.allSettled([
-    getCustomerInfo(userId),
-    db.select().from(userPlans).where(eq(userPlans.userId, userId)).limit(1),
-  ]);
-
-  const isBusiness = ezInfo.status === "fulfilled" && ezInfo.value.isBusiness;
-  const existingPlan = existingPlanResult.status === "fulfilled" ? existingPlanResult.value[0] : undefined;
+  const [existingPlan] = await db.select().from(userPlans).where(eq(userPlans.userId, userId)).limit(1);
 
   const plan =
     existingPlan ??
@@ -59,7 +51,7 @@ export async function POST(req: Request) {
         .then((rows) => rows[0])
     );
 
-  if (!isBusiness && plan.trialUsed >= PERSONAL_LIMIT) {
+  if (plan.planType === "personal" && plan.trialUsed >= PERSONAL_LIMIT) {
     await trackEvent({
       eventName: "generate_blocked_trial_limit",
       route,
@@ -127,7 +119,7 @@ export async function POST(req: Request) {
           .returning();
 
         let updatedPlan = plan;
-        if (!isBusiness) {
+        if (plan.planType === "personal") {
           const [updated] = await db
             .update(userPlans)
             .set({ trialUsed: sql`${userPlans.trialUsed} + 1`, updatedAt: new Date() })
@@ -144,7 +136,7 @@ export async function POST(req: Request) {
           statusCode: 200,
           responseMs: Date.now() - startTime,
           userAgent,
-          details: `mailType=${body.mailType};plan=${isBusiness ? "business" : "personal"};trialUsed=${updatedPlan.trialUsed}`,
+          details: `mailType=${body.mailType};plan=${updatedPlan.planType};trialUsed=${updatedPlan.trialUsed}`,
         });
 
         controller.enqueue(
@@ -153,9 +145,9 @@ export async function POST(req: Request) {
               type: "done",
               email: savedEmail,
               plan: {
-                type: isBusiness ? "business" : "personal",
+                type: updatedPlan.planType,
                 trialUsed: updatedPlan.trialUsed,
-                trialRemaining: isBusiness ? null : Math.max(0, PERSONAL_LIMIT - updatedPlan.trialUsed),
+                trialRemaining: updatedPlan.planType === "personal" ? Math.max(0, PERSONAL_LIMIT - updatedPlan.trialUsed) : null,
               },
             })}\n\n`
           )
