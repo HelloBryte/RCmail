@@ -85,12 +85,12 @@ export default function PricingPage() {
             {order && (
               <div className="mt-4 space-y-3">
                 <p className="text-sm text-[var(--muted)]">
-                  使用支付宝扫码支付 <span className="font-semibold text-[var(--ink)]">¥{order.price}</span>，支付后自动开通 Business。
+                  使用微信扫码支付 <span className="font-semibold text-[var(--ink)]">¥{order.price}</span>，支付后自动开通 Business。
                 </p>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={order.urlQrcode}
-                  alt="支付宝收款码"
+                  alt="微信收款码"
                   width={180}
                   height={180}
                   className="rounded-xl border border-[var(--line)]"
