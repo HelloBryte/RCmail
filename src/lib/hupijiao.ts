@@ -34,8 +34,8 @@ export async function createPaymentOrder(opts: {
   notifyUrl: string;
   returnUrl: string;
 }): Promise<CreateOrderResult> {
-  const appid = process.env.HUPIJIAO_APPID;
-  const appSecret = process.env.HUPIJIAO_APPSECRET;
+  const appid = process.env.HUPIJIAO_APPID?.trim();
+  const appSecret = process.env.HUPIJIAO_APPSECRET?.trim();
 
   if (!appid || !appSecret) {
     throw new Error("HUPIJIAO_APPID and HUPIJIAO_APPSECRET are required");
