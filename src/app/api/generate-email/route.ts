@@ -1,3 +1,5 @@
+export const maxDuration = 60;
+
 import { auth } from "@clerk/nextjs/server";
 import { and, eq, sql } from "drizzle-orm";
 import { trackEvent } from "@/lib/analytics/track-event";
@@ -165,6 +167,7 @@ export async function POST(req: Request) {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",
       Connection: "keep-alive",
+      "X-Accel-Buffering": "no",
     },
   });
 }

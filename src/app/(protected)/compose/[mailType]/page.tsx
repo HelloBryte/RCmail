@@ -173,8 +173,14 @@ export default function ComposePage({ params }: { params: Promise<{ mailType: st
         </div>
 
         <div className="rounded-xl border border-[var(--line)] bg-white/80 p-4">
-          <p className="text-sm font-semibold text-[var(--ink)]">Тема: {mailSubject || "(等待生成)"}</p>
-          <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-[var(--ink)]">{mailBody || "生成结果会显示在这里。"}</p>
+          {busy && !mailBody ? (
+            <p className="text-sm text-[var(--muted)] animate-pulse">正在生成，请稍候…</p>
+          ) : (
+            <>
+              <p className="text-sm font-semibold text-[var(--ink)]">Тема: {mailSubject || "(等待生成)"}</p>
+              <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-[var(--ink)]">{mailBody || "生成结果会显示在这里。"}</p>
+            </>
+          )}
         </div>
       </section>
     </main>

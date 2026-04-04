@@ -41,7 +41,7 @@ export default function PricingPage() {
           clearInterval(pollRef.current!);
           setOrder(null);
         }
-      }, 3000);
+      }, 1000);
     } else {
       if (pollRef.current) clearInterval(pollRef.current);
     }
