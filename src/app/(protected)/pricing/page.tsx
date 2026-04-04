@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type PlanData = {
   type: "personal" | "business";
@@ -19,13 +19,35 @@ export default function PricingPage() {
   const [order, setOrder] = useState<OrderData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  function fetchPlan() {
+    return fetch("/api/account/plan")
+      .then((r) => r.json())
+      .then((d: PlanData) => { setPlan(d); return d; })
+      .catch(() => null);
+  }
 
   useEffect(() => {
-    fetch("/api/account/plan")
-      .then((r) => r.json())
-      .then((d) => setPlan(d))
-      .catch(() => {});
+    fetchPlan();
   }, []);
+
+  // Start polling when QR code is shown; stop when Business detected
+  useEffect(() => {
+    if (order && plan?.type !== "business") {
+      pollRef.current = setInterval(async () => {
+        const latest = await fetchPlan();
+        if (latest?.type === "business") {
+          clearInterval(pollRef.current!);
+          setOrder(null);
+        }
+      }, 3000);
+    } else {
+      if (pollRef.current) clearInterval(pollRef.current);
+    }
+    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [order]);
 
   async function handleUpgrade() {
     setLoading(true);
