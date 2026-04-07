@@ -64,8 +64,13 @@ export default function ComposePage({ params }: { params: Promise<{ mailType: st
         return;
       }
 
+      if (res.status === 401) {
+        throw new Error("登录已过期，请刷新页面后重新登录");
+      }
+
       if (!res.ok) {
-        throw new Error("生成失败，请稍后再试");
+        const msg = await res.text().catch(() => "");
+        throw new Error(`生成失败 (${res.status})${msg ? "：" + msg.slice(0, 120) : ""}`);
       }
 
       const reader = res.body!.getReader();
