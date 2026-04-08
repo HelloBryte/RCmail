@@ -26,12 +26,12 @@ export default function ComposePage({ params }: { params: Promise<{ mailType: st
 
   if (!type) {
     return (
-      <main className="card-surface rounded-2xl p-6">
-        <p className="text-sm text-[var(--muted)]">无效的邮件类型。</p>
-        <Link href="/dashboard" className="mt-3 inline-flex rounded-full border border-[var(--line)] px-4 py-2 text-sm">
+      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+        <p className="text-sm text-gray-500">无效的邮件类型。</p>
+        <Link href="/dashboard" className="mt-3 inline-flex rounded-lg border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50">
           返回模板列表
         </Link>
-      </main>
+      </div>
     );
   }
 
@@ -109,85 +109,110 @@ export default function ComposePage({ params }: { params: Promise<{ mailType: st
   }
 
   return (
-    <main className="grid flex-1 gap-5 lg:grid-cols-[1.1fr_1fr]">
-      <section className="card-surface rounded-2xl p-6">
-        <p className="text-xs uppercase tracking-widest text-[var(--muted)]">模板写作</p>
-        <h2 className="section-title mt-2 text-2xl font-semibold">{typeInfo.title}</h2>
-        <p className="mt-2 text-sm text-[var(--muted)]">{typeInfo.summary}</p>
+    <div className="grid gap-6 lg:grid-cols-[1.1fr_1fr]">
+      {/* Left: Form */}
+      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
+        <p className="text-xs uppercase tracking-widest text-gray-400">模板写作</p>
+        <h2 className="section-title mt-2 text-2xl font-bold text-gray-900">{typeInfo.title}</h2>
+        <p className="mt-2 text-sm text-gray-500">{typeInfo.summary}</p>
 
-        <form onSubmit={handleSubmit} className="mt-5 space-y-3">
-          <input
-            value={recipient}
-            onChange={(e) => setRecipient(e.target.value)}
-            placeholder="收件人 / 公司"
-            className="w-full rounded-xl border border-[var(--line)] bg-white/80 px-3 py-2"
-            required
-          />
-          <input
-            value={purpose}
-            onChange={(e) => setPurpose(e.target.value)}
-            placeholder="沟通目的"
-            className="w-full rounded-xl border border-[var(--line)] bg-white/80 px-3 py-2"
-            required
-          />
-          <textarea
-            value={details}
-            onChange={(e) => setDetails(e.target.value)}
-            placeholder="补充要点（金额、截止日期、发票号、展位号等）"
-            className="min-h-28 w-full rounded-xl border border-[var(--line)] bg-white/80 px-3 py-2"
-          />
-          <select
-            value={tone}
-            onChange={(e) => setTone(e.target.value as "formal" | "friendly" | "firm")}
-            className="w-full rounded-xl border border-[var(--line)] bg-white/80 px-3 py-2"
-          >
-            <option value="formal">正式</option>
-            <option value="friendly">友好</option>
-            <option value="firm">礼貌坚定</option>
-          </select>
+        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          <div>
+            <label className="mb-1.5 block text-sm font-semibold text-gray-700">收件人 / 公司</label>
+            <input
+              value={recipient}
+              onChange={(e) => setRecipient(e.target.value)}
+              placeholder="例如：ООО ТехПром"
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              required
+            />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-semibold text-gray-700">沟通目的</label>
+            <input
+              value={purpose}
+              onChange={(e) => setPurpose(e.target.value)}
+              placeholder="例如：邀请客户参加5月莫斯科展会"
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              required
+            />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-semibold text-gray-700">补充要点（可选）</label>
+            <textarea
+              value={details}
+              onChange={(e) => setDetails(e.target.value)}
+              placeholder="例如：报价有效期10天、附件含产品目录、希望3月底前确认。"
+              className="min-h-28 w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+            />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-semibold text-gray-700">语气风格</label>
+            <select
+              value={tone}
+              onChange={(e) => setTone(e.target.value as "formal" | "friendly" | "firm")}
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+            >
+              <option value="formal">专业正式</option>
+              <option value="friendly">友好合作</option>
+              <option value="firm">礼貌坚定</option>
+            </select>
+          </div>
 
           <button
             type="submit"
             disabled={busy}
-            className="rounded-full bg-[var(--brand)] px-5 py-2 text-sm font-semibold text-white disabled:opacity-70"
+            className="rounded-lg bg-blue-700 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:opacity-70"
           >
             {busy ? "生成中..." : "生成俄语商务邮件"}
           </button>
         </form>
 
-        {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
+        {error && (
+          <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+            {error}
+            {error.includes("试用") && (
+              <Link href="/pricing" className="ml-2 font-semibold underline">
+                去升级套餐
+              </Link>
+            )}
+          </div>
+        )}
 
-        <div className="mt-4 rounded-xl border border-[var(--line)] bg-white/70 p-3 text-xs text-[var(--muted)]">
-          {plan?.type === "business" ? "当前为 Business，无限使用。" : `当前为 Personal，剩余试用：${plan?.trialRemaining ?? 3}`}
-          <Link href="/pricing" className="ml-2 underline">
-            前往升级
+        <div className="mt-4 rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-xs text-blue-900">
+          {plan?.type === "business"
+            ? "当前为 Business 套餐，无限使用。"
+            : `当前为 Personal 套餐，剩余试用：${plan?.trialRemaining ?? 3} 次`}
+          <Link href="/pricing" className="ml-2 font-semibold underline">
+            查看套餐
           </Link>
         </div>
-      </section>
+      </div>
 
-      <section className="card-surface rounded-2xl p-6">
-        <div className="mb-3 flex items-center justify-between">
-          <h3 className="section-title text-xl font-semibold">俄语邮件结果</h3>
+      {/* Right: Result */}
+      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="section-title text-xl font-bold text-gray-900">俄语邮件结果</h3>
           <button
             type="button"
             onClick={() => navigator.clipboard.writeText(`Тема: ${mailSubject}\n\n${mailBody}`)}
-            className="rounded-full border border-[var(--line)] px-3 py-1 text-xs"
+            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
           >
-            复制
+            复制俄语邮件
           </button>
         </div>
 
-        <div className="rounded-xl border border-[var(--line)] bg-white/80 p-4">
+        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
           {busy && !mailBody ? (
-            <p className="text-sm text-[var(--muted)] animate-pulse">正在生成，请稍候…</p>
+            <p className="animate-pulse text-sm text-gray-400">正在生成，请稍候…</p>
           ) : (
             <>
-              <p className="text-sm font-semibold text-[var(--ink)]">Тема: {mailSubject || "(等待生成)"}</p>
-              <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-[var(--ink)]">{mailBody || "生成结果会显示在这里。"}</p>
+              <p className="text-sm font-semibold text-gray-800">Тема: {mailSubject || "(等待生成)"}</p>
+              <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-gray-700">{mailBody || "生成结果会显示在这里。"}</p>
             </>
           )}
         </div>
-      </section>
-    </main>
+      </div>
+    </div>
   );
 }

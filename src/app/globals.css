@@ -1,13 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #f8f7f3;
-  --surface: #fffdf7;
-  --ink: #1f2a37;
-  --muted: #5e6a79;
-  --line: #d2cbbf;
-  --brand: #b34a2d;
-  --brand-2: #2d6a7f;
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --ink: #0f172a;
+  --muted: #64748b;
+  --line: #e2e8f0;
+  --brand: #1d4ed8;
+  --brand-2: #3b82f6;
+  --brand-900: #0f2f76;
 }
 
 @theme inline {
@@ -19,19 +20,21 @@
 
 body {
   background:
-    radial-gradient(circle at 12% 8%, color-mix(in oklab, var(--brand) 13%, white) 0%, transparent 35%),
-    radial-gradient(circle at 88% 14%, color-mix(in oklab, var(--brand-2) 15%, white) 0%, transparent 38%),
-    linear-gradient(180deg, #fcfbf7 0%, #f4f0e7 100%);
+    radial-gradient(circle at 10% 5%, rgba(59, 130, 246, 0.08), transparent 32%),
+    radial-gradient(circle at 90% 0%, rgba(30, 58, 138, 0.08), transparent 25%),
+    var(--bg);
   color: var(--ink);
   font-family: var(--font-noto-sans-sc), sans-serif;
 }
 
 .card-surface {
-  background: color-mix(in oklab, var(--surface) 95%, white);
-  border: 1px solid color-mix(in oklab, var(--line) 84%, white);
-  box-shadow:
-    0 12px 30px -22px rgba(31, 42, 55, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.08), 0 1px 2px -1px rgba(15, 23, 42, 0.05);
+}
+
+.gradient-hero {
+  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
 }
 
 .section-title {
@@ -52,4 +55,12 @@ body {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.template-card {
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.template-card:hover {
+  transform: translateY(-2px);
 }

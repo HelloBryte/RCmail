@@ -11,14 +11,26 @@ export async function POST(req: Request) {
     return Response.json({ error: "Payment not configured" }, { status: 503 });
   }
 
+  const body = await req.json().catch(() => ({})) as { plan?: string };
+  const planType = body.plan === "yearly" ? "yearly" : "monthly";
+
   const origin = new URL(req.url).origin;
-  const price = process.env.HUPIJIAO_BUSINESS_PRICE ?? "29";
+
+  let price: string;
+  let title: string;
+  if (planType === "yearly") {
+    price = process.env.HUPIJIAO_YEARLY_PRICE ?? "99";
+    title = "RCmail Business 尊享年卡";
+  } else {
+    price = process.env.HUPIJIAO_MONTHLY_PRICE ?? "14.9";
+    title = "RCmail Business 标准月卡";
+  }
 
   try {
     const order = await createPaymentOrder({
       userId,
       amount: price,
-      title: "RCmail Business 会员",
+      title,
       notifyUrl: `${origin}/api/billing/notify`,
       returnUrl: `${origin}/pricing`,
     });
@@ -29,3 +41,4 @@ export async function POST(req: Request) {
     return Response.json({ error: msg }, { status: 500 });
   }
 }
+

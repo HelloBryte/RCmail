@@ -1,35 +1,83 @@
 import Link from "next/link";
+import { Tent, Handshake, CalendarClock, Headphones, DollarSign } from "lucide-react";
 import { MAIL_TYPES } from "@/lib/mail-types";
+
+const templateMeta: Record<string, { icon: React.ReactNode; colorBg: string; colorText: string; colorHover: string; count: string }> = {
+  "exhibition-invitation": {
+    icon: <Tent size={24} />,
+    colorBg: "bg-blue-50 text-blue-700",
+    colorText: "text-blue-600",
+    colorHover: "group-hover:bg-blue-600 group-hover:text-white",
+    count: "12 个细分模板",
+  },
+  "cooperation-negotiation": {
+    icon: <Handshake size={24} />,
+    colorBg: "bg-teal-50 text-teal-700",
+    colorText: "text-teal-600",
+    colorHover: "group-hover:bg-teal-600 group-hover:text-white",
+    count: "24 个细分模板",
+  },
+  "client-follow-up": {
+    icon: <CalendarClock size={24} />,
+    colorBg: "bg-orange-50 text-orange-700",
+    colorText: "text-orange-600",
+    colorHover: "group-hover:bg-orange-600 group-hover:text-white",
+    count: "18 个细分模板",
+  },
+  "after-sales": {
+    icon: <Headphones size={24} />,
+    colorBg: "bg-purple-50 text-purple-700",
+    colorText: "text-purple-600",
+    colorHover: "group-hover:bg-purple-600 group-hover:text-white",
+    count: "15 个细分模板",
+  },
+  "payment-reminder": {
+    icon: <DollarSign size={24} />,
+    colorBg: "bg-red-50 text-red-700",
+    colorText: "text-red-600",
+    colorHover: "group-hover:bg-red-600 group-hover:text-white",
+    count: "8 个细分模板",
+  },
+};
 
 export default function DashboardPage() {
   return (
-    <main className="space-y-5">
-      <section className="card-surface rounded-2xl p-6">
-        <h2 className="section-title text-2xl font-semibold">选择邮件类型</h2>
-        <p className="mt-2 text-sm text-[var(--muted)]">点击任意类型即可进入对应模板写作页面。</p>
-      </section>
+    <div className="space-y-8">
+      <div>
+        <h1 className="section-title text-2xl font-bold text-gray-900 sm:text-3xl">邮件模板库</h1>
+        <p className="mt-2 text-gray-500">覆盖中俄商务沟通全场景，选择合适的模板开始撰写</p>
+      </div>
 
-      <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {MAIL_TYPES.map((item) => (
-          <article key={item.slug} className="card-surface rounded-2xl p-5">
-            <h3 className="section-title text-lg font-semibold">{item.title}</h3>
-            <p className="mt-2 text-sm text-[var(--muted)]">{item.summary}</p>
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        {MAIL_TYPES.map((item) => {
+          const meta = templateMeta[item.slug];
+          return (
             <Link
+              key={item.slug}
               href={`/compose/${item.slug}`}
-              className="mt-4 inline-flex rounded-full bg-[var(--brand-2)] px-4 py-2 text-sm font-semibold text-white"
+              className="template-card group rounded-xl border border-gray-100 bg-white p-6 shadow-sm hover:border-blue-300 hover:shadow-md"
             >
-              去写这类邮件
+              <div className={`mb-4 flex h-12 w-12 items-center justify-center rounded-lg transition-colors ${meta.colorBg} ${meta.colorHover}`}>
+                {meta.icon}
+              </div>
+              <h3 className="mb-2 text-lg font-bold text-gray-800">{item.title}</h3>
+              <p className="mb-4 text-sm leading-relaxed text-gray-500">{item.summary}</p>
+              <div className={`flex items-center gap-1 text-xs font-medium ${meta.colorText}`}>
+                {meta.count}
+                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+              </div>
             </Link>
-          </article>
-        ))}
-      </section>
+          );
+        })}
+      </div>
 
-      <section className="card-surface rounded-2xl p-5">
-        <p className="text-sm text-[var(--muted)]">Personal 仅 3 次试用，Business 无限使用。</p>
-        <Link href="/pricing" className="mt-3 inline-flex rounded-full border border-[var(--line)] px-4 py-2 text-sm">
-          去升级 Business
+      <div className="rounded-xl border border-blue-100 bg-blue-50 px-5 py-4 text-sm text-blue-900">
+        免费 Personal 套餐共 3 次试用机会，升级后无限使用。
+        <Link href="/pricing" className="ml-2 font-semibold underline hover:text-blue-700">
+          查看套餐 →
         </Link>
-      </section>
-    </main>
+      </div>
+    </div>
   );
 }
+

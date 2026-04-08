@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Mail } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 
 export const dynamic = "force-dynamic";
@@ -9,33 +10,53 @@ export default function ProtectedLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 py-6 sm:px-10 lg:px-14">
-      <header className="card-surface mb-6 flex items-center justify-between rounded-2xl px-4 py-3">
-        <div className="flex items-center gap-2">
-          <p className="section-title text-lg font-semibold">RCmail 商务写作台</p>
-          <span className="rounded-full border border-[var(--line)] px-2 py-0.5 text-[10px] uppercase tracking-widest text-[var(--muted)]">
-            qwen-powered
-          </span>
+    <div className="flex min-h-screen flex-col bg-[var(--bg)]">
+      {/* Sticky navbar */}
+      <nav className="sticky top-0 z-50 border-b border-[var(--line)] bg-white shadow-sm">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+          <Link href="/" className="flex items-center gap-2">
+            <Mail className="text-blue-800" size={26} />
+            <span className="text-xl font-bold tracking-tight text-gray-900">
+              RC<span className="text-blue-700">MailAI</span>
+            </span>
+          </Link>
+
+          <nav className="flex items-center gap-1 text-sm font-medium">
+            <Link
+              href="/dashboard"
+              className="rounded-full px-3 py-1.5 text-gray-600 transition hover:bg-gray-100 hover:text-blue-700"
+            >
+              新建邮件
+            </Link>
+            <Link
+              href="/history"
+              className="rounded-full px-3 py-1.5 text-gray-600 transition hover:bg-gray-100 hover:text-blue-700"
+            >
+              历史记录
+            </Link>
+            <Link
+              href="/pricing"
+              className="rounded-full px-3 py-1.5 text-gray-600 transition hover:bg-gray-100 hover:text-blue-700"
+            >
+              套餐
+            </Link>
+            <Link
+              href="/admin"
+              className="rounded-full px-3 py-1.5 text-gray-600 transition hover:bg-gray-100 hover:text-blue-700"
+            >
+              后台
+            </Link>
+            <span className="ml-2">
+              <UserButton />
+            </span>
+          </nav>
         </div>
+      </nav>
 
-        <nav className="flex items-center gap-3 text-sm">
-          <Link href="/dashboard" className="rounded-full px-3 py-1 transition hover:bg-white/70">
-            模板
-          </Link>
-          <Link href="/pricing" className="rounded-full px-3 py-1 transition hover:bg-white/70">
-            套餐
-          </Link>
-          <Link href="/history" className="rounded-full px-3 py-1 transition hover:bg-white/70">
-            历史
-          </Link>
-          <Link href="/admin" className="rounded-full px-3 py-1 transition hover:bg-white/70">
-            后台
-          </Link>
-          <UserButton />
-        </nav>
-      </header>
-
-      {children}
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
+        {children}
+      </main>
     </div>
   );
 }
+

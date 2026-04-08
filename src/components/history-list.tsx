@@ -44,34 +44,38 @@ export function HistoryList() {
   }, []);
 
   if (loading) {
-    return <p className="text-sm text-[var(--muted)]">正在加载历史记录...</p>;
+    return <p className="text-sm text-gray-400">正在加载历史记录...</p>;
   }
 
   if (items.length === 0) {
-    return <p className="text-sm text-[var(--muted)]">暂无历史记录。</p>;
+    return (
+      <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center text-gray-500">
+        还没有历史记录，请先去新建邮件页生成内容。
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {items.map((item) => (
-        <article key={item.id} className="card-surface rounded-2xl p-4">
+        <article key={item.id} className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h3 className="section-title text-lg font-semibold">{item.subject}</h3>
+            <h3 className="section-title text-lg font-bold text-gray-900">{item.subject}</h3>
             <button
               onClick={() => removeItem(item.id)}
-              className="rounded-full border border-[var(--line)] px-3 py-1 text-xs font-medium text-[var(--ink)] transition hover:bg-white"
+              className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-50"
               type="button"
             >
               删除
             </button>
           </div>
-          <p className="mt-1 text-xs text-[var(--muted)]">
+          <p className="mt-1 text-xs text-gray-400">
             类型: {item.emailType} · 收件人: {item.recipient} · 语气: {item.tone}
           </p>
-          <p className="mt-3 text-sm text-[var(--muted)]">中文输入: {item.chineseInput}</p>
-          <p className="mt-2 whitespace-pre-wrap rounded-xl bg-white/70 p-3 text-sm text-[var(--ink)]">
+          <p className="mt-3 text-sm text-gray-500">中文输入: {item.chineseInput}</p>
+          <pre className="mt-2 whitespace-pre-wrap rounded-lg border border-gray-100 bg-gray-50 p-4 text-sm leading-7 text-gray-700">
             {item.russianOutput}
-          </p>
+          </pre>
         </article>
       ))}
     </div>
