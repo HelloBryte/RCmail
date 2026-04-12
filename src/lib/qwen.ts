@@ -50,7 +50,7 @@ export async function streamBusinessMailFromQwen(userPrompt: string): Promise<Re
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
-      Accept: "text/event-stream",
+      "X-DashScope-SSE": "enable",
     },
     body: JSON.stringify({
       model,
