@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Tent, Handshake, CalendarClock, Headphones, DollarSign } from "lucide-react";
+import { PlanBanner } from "./plan-banner";
 import { MAIL_TYPES } from "@/lib/mail-types";
 
 const templateMeta: Record<string, { icon: React.ReactNode; colorBg: string; colorText: string; colorHover: string; count: string }> = {
@@ -71,12 +72,7 @@ export default function DashboardPage() {
         })}
       </div>
 
-      <div className="rounded-xl border border-blue-100 bg-blue-50 px-5 py-4 text-sm text-blue-900">
-        免费 Personal 套餐共 3 次试用机会，升级后无限使用。
-        <Link href="/pricing" className="ml-2 font-semibold underline hover:text-blue-700">
-          查看套餐 →
-        </Link>
-      </div>
+      <PlanBanner />
     </div>
   );
 }
