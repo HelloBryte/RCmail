@@ -6,8 +6,10 @@ import { getMailTypeBySlug, isMailTypeSlug, type MailTypeSlug } from "@/lib/mail
 
 type PlanInfo = {
   type: "personal" | "business";
+  variant: "personal" | "monthly" | "yearly";
   trialUsed: number;
   trialRemaining: number | null;
+  daysRemaining: number | null;
 };
 
 export default function ComposePage({ params }: { params: Promise<{ mailType: string }> }) {
@@ -181,7 +183,9 @@ export default function ComposePage({ params }: { params: Promise<{ mailType: st
 
         <div className="mt-4 rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-xs text-blue-900">
           {plan?.type === "business"
-            ? "当前为 Business 套餐，无限使用。"
+            ? plan.variant === "monthly" && plan.daysRemaining !== null
+              ? `当前为 Business 月卡，还剩 ${plan.daysRemaining} 天。`
+              : "当前为 Business 年卡，无限使用。"
             : `当前为 Personal 套餐，剩余试用：${plan?.trialRemaining ?? 3} 次`}
           <Link href="/pricing" className="ml-2 font-semibold underline">
             查看套餐

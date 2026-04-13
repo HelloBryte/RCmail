@@ -5,7 +5,10 @@ import { Check } from "lucide-react";
 
 type PlanData = {
   type: "personal" | "business";
+  variant: "personal" | "monthly" | "yearly";
   trialRemaining: number | null;
+  daysRemaining: number | null;
+  expiry: string | null;
 };
 
 type OrderData = {
@@ -106,7 +109,7 @@ export default function PricingPage() {
 
       {isBusiness && (
         <div className="rounded-xl border border-green-200 bg-green-50 px-5 py-4 text-sm font-medium text-green-800">
-          ✓ 您当前已是 Business 会员，享受无限使用权限。
+          ✓ 您当前已是 Business 会员{plan?.variant === "monthly" && plan.daysRemaining !== null ? `（月卡，还剩 ${plan.daysRemaining} 天）` : plan?.variant === "yearly" ? "（年卡，永久有效）" : ""}，享受无限使用权限。
         </div>
       )}
 

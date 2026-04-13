@@ -14,18 +14,29 @@ export async function POST(req: Request) {
     return new Response("Unauthorized", { status: 401 });
   }
 
+  // 需要管理员密钥才能手动激活
+  const adminSecret = process.env.ADMIN_SECRET;
+  const body = await req.json().catch(() => ({})) as { secret?: string; targetUserId?: string };
+  if (!adminSecret || body.secret !== adminSecret) {
+    return new Response("Forbidden", { status: 403 });
+  }
+
+  const targetId = body.targetUserId ?? userId;
+
   const db = getDb();
-  const [existing] = await db.select().from(userPlans).where(eq(userPlans.userId, userId)).limit(1);
+  const [existing] = await db.select().from(userPlans).where(eq(userPlans.userId, targetId)).limit(1);
 
   if (!existing) {
     await db.insert(userPlans).values({
-      userId,
+      userId: targetId,
       planType: "business",
+      planVariant: "yearly",
+      planExpiry: null,
       trialUsed: 0,
       updatedAt: new Date(),
     });
   } else {
-    await db.update(userPlans).set({ planType: "business", updatedAt: new Date() }).where(eq(userPlans.userId, userId));
+    await db.update(userPlans).set({ planType: "business", planVariant: "yearly", planExpiry: null, updatedAt: new Date() }).where(eq(userPlans.userId, targetId));
   }
 
   await trackEvent({
@@ -36,5 +47,5 @@ export async function POST(req: Request) {
     responseMs: Date.now() - startTime,
   });
 
-  return Response.json({ ok: true, planType: "business" });
+  return Response.json({ ok: true, planType: "business", targetUserId: targetId });
 }

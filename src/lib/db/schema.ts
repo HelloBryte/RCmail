@@ -19,6 +19,8 @@ export type NewEmailRow = typeof emails.$inferInsert;
 export const userPlans = pgTable("user_plans", {
   userId: text("user_id").primaryKey(),
   planType: text("plan_type").notNull().default("personal"),
+  planVariant: text("plan_variant").notNull().default("personal"), // 'personal' | 'monthly' | 'yearly'
+  planExpiry: timestamp("plan_expiry", { mode: "date" }), // null = no expiry (personal or yearly)
   trialUsed: integer("trial_used").notNull().default(0),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),

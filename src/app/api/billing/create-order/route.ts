@@ -33,6 +33,7 @@ export async function POST(req: Request) {
       title,
       notifyUrl: `${origin}/api/billing/notify`,
       returnUrl: `${origin}/pricing`,
+      planType,
     });
 
     return Response.json({ urlQrcode: order.urlQrcode, url: order.url, orderId: order.orderId, price });

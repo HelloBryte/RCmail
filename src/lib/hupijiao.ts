@@ -33,6 +33,7 @@ export async function createPaymentOrder(opts: {
   title: string;
   notifyUrl: string;
   returnUrl: string;
+  planType: string; // 'monthly' | 'yearly'
 }): Promise<CreateOrderResult> {
   const appid = process.env.HUPIJIAO_APPID?.trim();
   const appSecret = process.env.HUPIJIAO_APPSECRET?.trim();
@@ -54,7 +55,7 @@ export async function createPaymentOrder(opts: {
     time,
     notify_url: opts.notifyUrl,
     return_url: opts.returnUrl,
-    attach: opts.userId, // echoed back in webhook to identify user
+    attach: `${opts.userId}:${opts.planType}`, // echoed back in webhook to identify user and plan
     nonce_str: nonce,
   };
 
