@@ -30,7 +30,9 @@ function PlanBadge({ plan }: { plan: UserPlan }) {
     return <span className="rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-semibold text-yellow-700">永久卡</span>;
   }
   if (plan.planType === "business" && plan.planVariant === "yearly") {
-    return <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-semibold text-purple-700">年卡</span>;
+    const expiry = plan.planExpiry ? new Date(plan.planExpiry) : null;
+    const days = expiry ? Math.max(0, Math.ceil((expiry.getTime() - Date.now()) / 86400000)) : null;
+    return <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-semibold text-purple-700">年卡{days !== null ? ` 剩${days}天` : ""}</span>;
   }
   if (plan.planType === "business" && plan.planVariant === "monthly") {
     const expiry = plan.planExpiry ? new Date(plan.planExpiry) : null;
@@ -38,8 +40,10 @@ function PlanBadge({ plan }: { plan: UserPlan }) {
     return <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">月卡 剩{days}天</span>;
   }
   if (plan.planType === "business") {
-    // 兼容旧数据：variant 未知时按年卡显示
-    return <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-semibold text-purple-700">年卡</span>;
+    // 兼容旧数据
+    const expiry = plan.planExpiry ? new Date(plan.planExpiry) : null;
+    const days = expiry ? Math.max(0, Math.ceil((expiry.getTime() - Date.now()) / 86400000)) : null;
+    return <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-semibold text-purple-700">年卡{days !== null ? ` 剩${days}天` : ""}</span>;
   }
   return <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-500">免费</span>;
 }

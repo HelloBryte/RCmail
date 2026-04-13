@@ -23,7 +23,7 @@ export async function GET() {
   let { planType, planExpiry } = plan;
   let planVariant = (plan.planType === "business" && plan.planVariant === "personal") ? "yearly" : plan.planVariant;
 
-  // 检查月卡是否已过期，自动降级
+  // 检查月卡/年卡是否已过期，自动降级
   if (planType === "business" && planVariant === "monthly" && planExpiry && planExpiry < new Date()) {
     await db.update(userPlans).set({ planType: "personal", planVariant: "personal", planExpiry: null, updatedAt: new Date() }).where(eq(userPlans.userId, userId));
     planType = "personal";

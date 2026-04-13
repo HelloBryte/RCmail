@@ -23,10 +23,13 @@ export async function POST() {
 
   const db = getDb();
 
-  // 修正：business 用户若 planVariant 仍为 personal（旧版无此字段时的默认值），视为年卡
+  // 修正：business 用户若 planVariant 为 personal（旧版并无此字段），视为年卡
+  // 到期时间以 updated_at 为购买时间，并加 365 天
   const result = await db.execute(
     sql`UPDATE user_plans
-        SET plan_variant = 'yearly', updated_at = NOW()
+        SET plan_variant = 'yearly',
+            plan_expiry  = updated_at + INTERVAL '365 days',
+            updated_at   = NOW()
         WHERE plan_type = 'business'
           AND plan_variant = 'personal'`
   );
