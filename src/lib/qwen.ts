@@ -10,15 +10,6 @@ type QwenResult = {
   body: string;
 };
 
-function extractTextFromDashscope(payload: any): string {
-  const content = payload?.output?.choices?.[0]?.message?.content;
-  if (typeof content === "string") {
-    // Strip Qwen3 thinking tokens <think>...</think>
-    return content.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
-  }
-  return "";
-}
-
 export function splitSubjectAndBody(text: string): QwenResult {
   const lines = text.split("\n").map((line) => line.trim()).filter(Boolean);
   const subjectLine = lines.find((line) => line.toLowerCase().startsWith("тема") || line.toLowerCase().startsWith("subject"));

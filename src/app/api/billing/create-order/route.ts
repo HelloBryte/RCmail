@@ -19,10 +19,10 @@ export async function POST(req: Request) {
   let price: string;
   let title: string;
   if (planType === "yearly") {
-    price = process.env.HUPIJIAO_YEARLY_PRICE ?? "99";
+    price = process.env.HUPIJIAO_YEARLY_PRICE ?? process.env.HUPIJIAO_BUSINESS_PRICE ?? "99";
     title = "RCmail Business 尊享年卡";
   } else {
-    price = process.env.HUPIJIAO_MONTHLY_PRICE ?? "14.9";
+    price = process.env.HUPIJIAO_MONTHLY_PRICE ?? process.env.HUPIJIAO_BUSINESS_PRICE ?? "14.9";
     title = "RCmail Business 标准月卡";
   }
 
