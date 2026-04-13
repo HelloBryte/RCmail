@@ -124,7 +124,8 @@ export async function generateBusinessMailFromQwen(userPrompt: string): Promise<
   }
 
   const payload = await response.json();
-  const text = extractTextFromDashscope(payload);
+  const raw: string = payload?.output?.choices?.[0]?.message?.content ?? "";
+  const text = raw.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
 
   if (!text) {
     throw new Error("Qwen returned empty content");
