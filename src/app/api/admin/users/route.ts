@@ -61,7 +61,7 @@ export async function POST(req: Request) {
 
   const body = await req.json() as {
     targetUserId: string;
-    action: "grant_monthly" | "grant_yearly" | "revoke";
+    action: "grant_monthly" | "grant_yearly" | "grant_lifetime" | "revoke";
   };
 
   if (!body.targetUserId || !body.action) {
@@ -81,6 +81,10 @@ export async function POST(req: Request) {
   } else if (body.action === "grant_yearly") {
     planType = "business";
     planVariant = "yearly";
+    planExpiry = null;
+  } else if (body.action === "grant_lifetime") {
+    planType = "business";
+    planVariant = "lifetime";
     planExpiry = null;
   } else {
     planType = "personal";

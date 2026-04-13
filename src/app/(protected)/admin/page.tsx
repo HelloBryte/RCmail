@@ -26,6 +26,9 @@ type UserPlan = {
 };
 
 function PlanBadge({ plan }: { plan: UserPlan }) {
+  if (plan.planType === "business" && plan.planVariant === "lifetime") {
+    return <span className="rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-semibold text-yellow-700">永久卡</span>;
+  }
   if (plan.planType === "business" && plan.planVariant === "yearly") {
     return <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-semibold text-purple-700">年卡</span>;
   }
@@ -64,7 +67,7 @@ export default function AdminPage() {
     void load();
   }, []);
 
-  async function handleAction(userId: string, action: "grant_monthly" | "grant_yearly" | "revoke") {
+  async function handleAction(userId: string, action: "grant_monthly" | "grant_yearly" | "grant_lifetime" | "revoke") {
     setActionLoading(userId + action);
     try {
       const res = await fetch("/api/admin/users", {
@@ -171,6 +174,13 @@ export default function AdminPage() {
                         className="rounded-md border border-purple-200 bg-purple-50 px-2.5 py-1 text-xs font-medium text-purple-700 hover:bg-purple-100 disabled:opacity-50"
                       >
                         赋予年卡
+                      </button>
+                      <button
+                        onClick={() => handleAction(u.userId, "grant_lifetime")}
+                        disabled={actionLoading === u.userId + "grant_lifetime"}
+                        className="rounded-md border border-yellow-300 bg-yellow-50 px-2.5 py-1 text-xs font-medium text-yellow-700 hover:bg-yellow-100 disabled:opacity-50"
+                      >
+                        赋予永久卡
                       </button>
                       {u.planType === "business" && (
                         <button
