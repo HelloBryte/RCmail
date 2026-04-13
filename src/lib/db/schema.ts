@@ -19,7 +19,7 @@ export type NewEmailRow = typeof emails.$inferInsert;
 export const userPlans = pgTable("user_plans", {
   userId: text("user_id").primaryKey(),
   planType: text("plan_type").notNull().default("personal"),
-  planVariant: text("plan_variant").notNull().default("personal"), // 'personal' | 'monthly' | 'yearly'
+  planVariant: text("plan_variant").notNull().default("personal"), // 'personal' | 'monthly' | 'yearly' | 'lifetime'
   planExpiry: timestamp("plan_expiry", { mode: "date" }), // null = no expiry (personal or lifetime only)
   trialUsed: integer("trial_used").notNull().default(0),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),

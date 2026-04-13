@@ -31,12 +31,12 @@ export async function POST(req: Request) {
       userId: targetId,
       planType: "business",
       planVariant: "yearly",
-      planExpiry: null,
+      planExpiry: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
       trialUsed: 0,
       updatedAt: new Date(),
     });
   } else {
-    await db.update(userPlans).set({ planType: "business", planVariant: "yearly", planExpiry: null, updatedAt: new Date() }).where(eq(userPlans.userId, targetId));
+    await db.update(userPlans).set({ planType: "business", planVariant: "yearly", planExpiry: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), updatedAt: new Date() }).where(eq(userPlans.userId, targetId));
   }
 
   await trackEvent({
