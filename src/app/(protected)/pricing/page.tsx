@@ -5,7 +5,7 @@ import { Check } from "lucide-react";
 
 type PlanData = {
   type: "personal" | "business";
-  variant: "personal" | "monthly" | "yearly";
+  variant: "personal" | "monthly" | "yearly" | "lifetime";
   trialRemaining: number | null;
   daysRemaining: number | null;
   expiry: string | null;
@@ -35,6 +35,7 @@ const YEARLY_FEATURES = [
 
 export default function PricingPage() {
   const [plan, setPlan] = useState<PlanData | null>(null);
+  const [planLoading, setPlanLoading] = useState(true);
   const [order, setOrder] = useState<OrderData | null>(null);
   const [activePlan, setActivePlan] = useState<"monthly" | "yearly" | null>(null);
   const [loading, setLoading] = useState(false);
@@ -44,8 +45,8 @@ export default function PricingPage() {
   function fetchPlan() {
     return fetch("/api/account/plan")
       .then((r) => r.json())
-      .then((d: PlanData) => { setPlan(d); return d; })
-      .catch(() => null);
+      .then((d: PlanData) => { setPlan(d); setPlanLoading(false); return d; })
+      .catch(() => { setPlanLoading(false); return null; });
   }
 
   useEffect(() => {
@@ -107,17 +108,17 @@ export default function PricingPage() {
         <p className="mt-2 text-gray-500">升级后立即生效，无限次生成商务俄语邮件。</p>
       </div>
 
-      {isBusiness && (
+      {planLoading ? (
+        <div className="rounded-xl border border-gray-100 bg-gray-50 px-5 py-4 text-sm text-gray-400">套餐状态加载中…</div>
+      ) : isBusiness ? (
         <div className="rounded-xl border border-green-200 bg-green-50 px-5 py-4 text-sm font-medium text-green-800">
-          ✓ 您当前已是 Business 会员{plan?.variant === "monthly" && plan.daysRemaining !== null ? `（月卡，还剩 ${plan.daysRemaining} 天）` : plan?.variant === "yearly" ? "（年卡，永久有效）" : ""}，享受无限使用权限。
+          ✓ 您当前已是 Business 会员{plan?.variant === "monthly" && plan.daysRemaining !== null ? `（月卡，还剩 ${plan.daysRemaining} 天）` : plan?.variant === "yearly" ? "（年卡，永久有效）" : plan?.variant === "lifetime" ? "（永久卡，无限使用）" : ""}，享受无限使用权限。
         </div>
-      )}
-
-      {!isBusiness && plan?.type === "personal" && (
+      ) : plan?.type === "personal" ? (
         <div className="rounded-xl border border-blue-100 bg-blue-50 px-5 py-4 text-sm text-blue-900">
           当前为免费 Personal 套餐 · 剩余试用次数：<span className="font-semibold">{plan.trialRemaining ?? 0}</span> 次
         </div>
-      )}
+      ) : null}
 
       <div className="grid gap-6 md:grid-cols-2">
         {/* 标准月卡 */}

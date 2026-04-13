@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { type FormEvent, use, useMemo, useState } from "react";
+import { type FormEvent, use, useEffect, useMemo, useState } from "react";
 import { getMailTypeBySlug, isMailTypeSlug, type MailTypeSlug } from "@/lib/mail-types";
 
 type PlanInfo = {
   type: "personal" | "business";
-  variant: "personal" | "monthly" | "yearly";
+  variant: "personal" | "monthly" | "yearly" | "lifetime";
   trialUsed: number;
   trialRemaining: number | null;
   daysRemaining: number | null;
@@ -23,6 +23,15 @@ export default function ComposePage({ params }: { params: Promise<{ mailType: st
   const [mailSubject, setMailSubject] = useState("");
   const [mailBody, setMailBody] = useState("");
   const [plan, setPlan] = useState<PlanInfo | null>(null);
+  const [planLoading, setPlanLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/account/plan")
+      .then((r) => r.json())
+      .then((d: PlanInfo) => setPlan(d))
+      .catch(() => {})
+      .finally(() => setPlanLoading(false));
+  }, []);
 
   const type = useMemo(() => (isMailTypeSlug(mailType) ? (mailType as MailTypeSlug) : null), [mailType]);
 
@@ -182,11 +191,17 @@ export default function ComposePage({ params }: { params: Promise<{ mailType: st
         )}
 
         <div className="mt-4 rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-xs text-blue-900">
-          {plan?.type === "business"
-            ? plan.variant === "monthly" && plan.daysRemaining !== null
+          {planLoading ? (
+            <span className="text-gray-400">套餐加载中…</span>
+          ) : plan?.type === "business" ? (
+            plan.variant === "monthly" && plan.daysRemaining !== null
               ? `当前为 Business 月卡，还剩 ${plan.daysRemaining} 天。`
+              : plan.variant === "lifetime"
+              ? "当前为 Business 永久卡，无限使用。"
               : "当前为 Business 年卡，无限使用。"
-            : `当前为 Personal 套餐，剩余试用：${plan?.trialRemaining ?? 3} 次`}
+          ) : (
+            `当前为 Personal 套餐，剩余试用：${plan?.trialRemaining ?? 5} 次`
+          )}
           <Link href="/pricing" className="ml-2 font-semibold underline">
             查看套餐
           </Link>
