@@ -16,6 +16,7 @@ type MetricsData = {
 
 type UserPlan = {
   userId: string;
+  email: string;
   planType: string;
   planVariant: string;
   planExpiry: string | null;
@@ -90,6 +91,7 @@ export default function AdminPage() {
   ] as const;
 
   const filteredUsers = users.filter((u) =>
+    u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
     u.userId.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -113,7 +115,7 @@ export default function AdminPage() {
           <h3 className="text-lg font-bold text-gray-900">用户管理 ({users.length})</h3>
           <input
             type="text"
-            placeholder="搜索 User ID..."
+            placeholder="搜索邮箱或 User ID..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-64 rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
@@ -124,6 +126,7 @@ export default function AdminPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 text-left text-xs text-gray-400">
+                <th className="pb-2 pr-4 font-medium">邮箱</th>
                 <th className="pb-2 pr-4 font-medium">User ID</th>
                 <th className="pb-2 pr-4 font-medium">套餐状态</th>
                 <th className="pb-2 pr-4 font-medium">试用次数</th>
@@ -134,7 +137,8 @@ export default function AdminPage() {
             <tbody className="divide-y divide-gray-50">
               {filteredUsers.map((u) => (
                 <tr key={u.userId} className="hover:bg-gray-50">
-                  <td className="py-2.5 pr-4 font-mono text-xs text-gray-600">{u.userId.slice(0, 24)}…</td>
+                  <td className="py-2.5 pr-4 text-sm text-gray-800">{u.email || <span className="text-gray-400">—</span>}</td>
+                  <td className="py-2.5 pr-4 font-mono text-xs text-gray-400">{u.userId.slice(0, 16)}…</td>
                   <td className="py-2.5 pr-4"><PlanBadge plan={u} /></td>
                   <td className="py-2.5 pr-4 text-gray-600">{u.trialUsed}</td>
                   <td className="py-2.5 pr-4 text-xs text-gray-400">

@@ -1,4 +1,4 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { auth, clerkClient, currentUser } from "@clerk/nextjs/server";
 import { desc, eq } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import { userPlans } from "@/lib/db/schema";
@@ -21,14 +21,28 @@ async function checkAdmin() {
   return userId;
 }
 
-// GET /api/admin/users — 获取所有用户套餐列表
+// GET /api/admin/users — 获取所有用户套餐列表（附带邮箱）
 export async function GET() {
   if (!(await checkAdmin())) return new Response("Forbidden", { status: 403 });
 
   const db = getDb();
   const rows = await db.select().from(userPlans).orderBy(desc(userPlans.updatedAt));
 
-  return Response.json(rows);
+  // 批量从 Clerk 拉取邮箱
+  const client = await clerkClient();
+  const userIds = rows.map((r) => r.userId);
+  const emailMap: Record<string, string> = {};
+  if (userIds.length > 0) {
+    try {
+      const clerkUsers = await client.users.getUserList({ userId: userIds, limit: 500 });
+      for (const u of clerkUsers.data) {
+        emailMap[u.id] = u.emailAddresses?.[0]?.emailAddress ?? "";
+      }
+    } catch { /* ignore clerk errors */ }
+  }
+
+  const result = rows.map((r) => ({ ...r, email: emailMap[r.userId] ?? "" }));
+  return Response.json(result);
 }
 
 // POST /api/admin/users — 修改用户套餐
