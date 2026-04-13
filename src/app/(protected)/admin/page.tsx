@@ -61,16 +61,23 @@ export default function AdminPage() {
 
   async function handleAction(userId: string, action: "grant_monthly" | "grant_yearly" | "revoke") {
     setActionLoading(userId + action);
-    const res = await fetch("/api/admin/users", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ targetUserId: userId, action }),
-    });
-    if (res.ok) {
-      const updated = await res.json() as UserPlan;
-      setUsers((prev) => prev.map((u) => u.userId === userId ? updated : u));
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetUserId: userId, action }),
+      });
+      if (res.ok) {
+        const updated = await res.json() as UserPlan;
+        setUsers((prev) => prev.map((u) => u.userId === userId ? updated : u));
+      } else {
+        alert(`操作失败 (${res.status})`);
+      }
+    } catch {
+      alert("网络错误，请重试");
+    } finally {
+      setActionLoading(null);
     }
-    setActionLoading(null);
   }
 
   if (error) {
