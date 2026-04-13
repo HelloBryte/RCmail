@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import { userPlans } from "@/lib/db/schema";
 
-const PERSONAL_LIMIT = 3;
+const PERSONAL_LIMIT = 5;
 
 export async function GET() {
   const { userId } = await auth();

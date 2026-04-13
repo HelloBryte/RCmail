@@ -19,7 +19,7 @@ type RequestBody = {
   tone: Tone;
 };
 
-const PERSONAL_LIMIT = 3;
+const PERSONAL_LIMIT = 5;
 
 export async function POST(req: Request) {
   const startTime = Date.now();
