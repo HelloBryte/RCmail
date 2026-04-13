@@ -19,8 +19,11 @@ export async function GET() {
     return Response.json({ type: "personal", variant: "personal", trialUsed: 0, trialRemaining: PERSONAL_LIMIT, daysRemaining: null, expiry: null });
   }
 
+  // 兼容旧数据：business 用户若 planVariant 为 personal（旧版无该字段），视为年卡
+  let { planType, planExpiry } = plan;
+  let planVariant = (plan.planType === "business" && plan.planVariant === "personal") ? "yearly" : plan.planVariant;
+
   // 检查月卡是否已过期，自动降级
-  let { planType, planVariant, planExpiry } = plan;
   if (planType === "business" && planVariant === "monthly" && planExpiry && planExpiry < new Date()) {
     await db.update(userPlans).set({ planType: "personal", planVariant: "personal", planExpiry: null, updatedAt: new Date() }).where(eq(userPlans.userId, userId));
     planType = "personal";

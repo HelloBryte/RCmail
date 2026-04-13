@@ -34,6 +34,10 @@ function PlanBadge({ plan }: { plan: UserPlan }) {
     const days = expiry ? Math.max(0, Math.ceil((expiry.getTime() - Date.now()) / 86400000)) : 0;
     return <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">月卡 剩{days}天</span>;
   }
+  if (plan.planType === "business") {
+    // 兼容旧数据：variant 未知时按年卡显示
+    return <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-semibold text-purple-700">年卡</span>;
+  }
   return <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-500">免费</span>;
 }
 

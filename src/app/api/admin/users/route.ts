@@ -37,12 +37,15 @@ export async function GET() {
 
   const result = clerkUsers.data.map((u) => {
     const plan = planMap.get(u.id);
+    const rawVariant = plan?.planVariant ?? "personal";
+    // 兼容旧数据：business 用户若 planVariant 为 personal（旧版无该字段），视为年卡
+    const planVariant = (plan?.planType === "business" && rawVariant === "personal") ? "yearly" : rawVariant;
     return {
       userId: u.id,
       email: u.emailAddresses?.[0]?.emailAddress ?? "",
       createdAt: new Date(u.createdAt).toISOString(),
       planType: plan?.planType ?? "personal",
-      planVariant: plan?.planVariant ?? "personal",
+      planVariant,
       planExpiry: plan?.planExpiry ?? null,
       trialUsed: plan?.trialUsed ?? 0,
       updatedAt: plan?.updatedAt ?? null,
