@@ -17,11 +17,12 @@ type MetricsData = {
 type UserPlan = {
   userId: string;
   email: string;
+  createdAt: string;
   planType: string;
   planVariant: string;
   planExpiry: string | null;
   trialUsed: number;
-  updatedAt: string;
+  updatedAt: string | null;
 };
 
 function PlanBadge({ plan }: { plan: UserPlan }) {
