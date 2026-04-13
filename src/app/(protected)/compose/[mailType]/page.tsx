@@ -196,9 +196,11 @@ export default function ComposePage({ params }: { params: Promise<{ mailType: st
           ) : plan?.type === "business" ? (
             plan.variant === "monthly" && plan.daysRemaining !== null
               ? `当前为 Business 月卡，还剩 ${plan.daysRemaining} 天。`
+              : plan.variant === "yearly" && plan.daysRemaining !== null
+              ? `当前为 Business 年卡，还剩 ${plan.daysRemaining} 天。`
               : plan.variant === "lifetime"
               ? "当前为 Business 永久卡，无限使用。"
-              : "当前为 Business 年卡，无限使用。"
+              : "当前为 Business 会员，无限使用。"
           ) : (
             `当前为 Personal 套餐，剩余试用：${plan?.trialRemaining ?? 5} 次`
           )}

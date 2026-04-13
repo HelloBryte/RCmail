@@ -27,9 +27,11 @@ export function PlanBanner() {
     const detail =
       plan.variant === "monthly" && plan.daysRemaining !== null
         ? `月卡，还剩 ${plan.daysRemaining} 天`
+        : plan.variant === "yearly" && plan.daysRemaining !== null
+        ? `年卡，还剩 ${plan.daysRemaining} 天`
         : plan.variant === "lifetime"
         ? "永久卡，无限使用"
-        : "年卡，无限使用";
+        : "年卡";
     return (
       <div className="rounded-xl border border-green-200 bg-green-50 px-5 py-4 text-sm font-medium text-green-800">
         ✓ 当前为 Business 会员（{detail}），享受无限次生成。

@@ -31,9 +31,13 @@ export async function GET() {
     planExpiry = null;
   }
 
-  const daysRemaining = planType === "business" && planVariant === "monthly" && planExpiry
-    ? Math.max(0, Math.ceil((planExpiry.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
-    : null;
+  // 月卡和年卡都计算剩余天数，永久卡和 personal 为 null
+  const daysRemaining =
+    planType === "business" &&
+    (planVariant === "monthly" || planVariant === "yearly") &&
+    planExpiry
+      ? Math.max(0, Math.ceil((planExpiry.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+      : null;
 
   return Response.json({
     type: planType,

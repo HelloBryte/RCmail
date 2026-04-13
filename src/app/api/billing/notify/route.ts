@@ -34,9 +34,9 @@ export async function POST(req: Request) {
   }
 
   const variant = planVariant === "yearly" ? "yearly" : "monthly";
-  const expiry = variant === "monthly"
-    ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-    : null; // yearly = no expiry
+  const expiry = variant === "yearly"
+    ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+    : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
   const db = getDb();
 

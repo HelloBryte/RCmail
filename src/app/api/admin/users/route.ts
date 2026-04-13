@@ -81,7 +81,7 @@ export async function POST(req: Request) {
   } else if (body.action === "grant_yearly") {
     planType = "business";
     planVariant = "yearly";
-    planExpiry = null;
+    planExpiry = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
   } else if (body.action === "grant_lifetime") {
     planType = "business";
     planVariant = "lifetime";

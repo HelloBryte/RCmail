@@ -112,7 +112,7 @@ export default function PricingPage() {
         <div className="rounded-xl border border-gray-100 bg-gray-50 px-5 py-4 text-sm text-gray-400">套餐状态加载中…</div>
       ) : isBusiness ? (
         <div className="rounded-xl border border-green-200 bg-green-50 px-5 py-4 text-sm font-medium text-green-800">
-          ✓ 您当前已是 Business 会员{plan?.variant === "monthly" && plan.daysRemaining !== null ? `（月卡，还剩 ${plan.daysRemaining} 天）` : plan?.variant === "yearly" ? "（年卡，永久有效）" : plan?.variant === "lifetime" ? "（永久卡，无限使用）" : ""}，享受无限使用权限。
+          ✓ 您当前已是 Business 会员{plan?.variant === "monthly" && plan.daysRemaining !== null ? `（月卡，还剩 ${plan.daysRemaining} 天）` : plan?.variant === "yearly" && plan.daysRemaining !== null ? `（年卡，还剩 ${plan.daysRemaining} 天）` : plan?.variant === "lifetime" ? "（永久卡，无限使用）" : ""}，享受无限使用权限。
         </div>
       ) : plan?.type === "personal" ? (
         <div className="rounded-xl border border-blue-100 bg-blue-50 px-5 py-4 text-sm text-blue-900">
