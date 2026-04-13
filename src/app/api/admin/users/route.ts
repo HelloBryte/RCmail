@@ -87,5 +87,14 @@ export async function POST(req: Request) {
     });
 
   const [updated] = await db.select().from(userPlans).where(eq(userPlans.userId, body.targetUserId)).limit(1);
-  return Response.json(updated);
+
+  // 附带邮箱
+  let email = "";
+  try {
+    const client = await clerkClient();
+    const clerkUser = await client.users.getUser(body.targetUserId);
+    email = clerkUser.emailAddresses?.[0]?.emailAddress ?? "";
+  } catch { /* ignore */ }
+
+  return Response.json({ ...updated, email });
 }
