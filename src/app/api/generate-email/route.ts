@@ -1,22 +1,25 @@
 export const maxDuration = 60;
 
 import { auth } from "@clerk/nextjs/server";
+import { and, eq, sql } from "drizzle-orm";
 import { trackEvent } from "@/lib/analytics/track-event";
 import { getDb } from "@/lib/db";
-import { emailMessages, emails } from "@/lib/db/schema";
-import { buildInitialRequestSummary, formatDraftContent, serializeChineseInput } from "@/lib/email-thread";
+import { emails, userPlans } from "@/lib/db/schema";
 import { isMailTypeSlug, type MailTypeSlug } from "@/lib/mail-types";
-import { buildUserPrompt, isTone, type Tone } from "@/lib/prompts";
-import { buildPlanInfo, getActiveUserPlan, incrementPlanUsageIfNeeded, PERSONAL_LIMIT } from "@/lib/plans";
-import { splitSubjectAndBody, streamChatCompletionFromQwen } from "@/lib/qwen";
+import { buildUserPrompt } from "@/lib/prompts";
+import { splitSubjectAndBody, streamBusinessMailFromQwen } from "@/lib/qwen";
+
+type Tone = "formal" | "friendly" | "firm";
 
 type RequestBody = {
   mailType: string;
   recipient: string;
   purpose: string;
-  details?: string;
-  tone: string;
+  details: string;
+  tone: Tone;
 };
+
+const PERSONAL_LIMIT = 5;
 
 export async function POST(req: Request) {
   const startTime = Date.now();
@@ -30,15 +33,25 @@ export async function POST(req: Request) {
   }
 
   const body = (await req.json()) as RequestBody;
-  const details = body.details?.trim() ?? "";
 
-  if (!body?.mailType || !body?.recipient?.trim() || !body?.purpose?.trim() || !isTone(body?.tone) || !isMailTypeSlug(body.mailType)) {
+  if (!body?.mailType || !body?.recipient || !body?.purpose || !body?.tone || !isMailTypeSlug(body.mailType)) {
     await trackEvent({ eventName: "generate_bad_request", route, userId, statusCode: 400, responseMs: Date.now() - startTime, userAgent });
     return new Response("Invalid request payload", { status: 400 });
   }
 
   const db = getDb();
-  const plan = await getActiveUserPlan(db, userId);
+
+  const [existingPlan] = await db.select().from(userPlans).where(eq(userPlans.userId, userId)).limit(1);
+
+  const plan =
+    existingPlan ??
+    (
+      await db
+        .insert(userPlans)
+        .values({ userId, planType: "personal", trialUsed: 0, updatedAt: new Date() })
+        .returning()
+        .then((rows) => rows[0])
+    );
 
   if (plan.planType === "personal" && plan.trialUsed >= PERSONAL_LIMIT) {
     await trackEvent({
@@ -54,21 +67,20 @@ export async function POST(req: Request) {
     return Response.json(
       {
         error: "TRIAL_LIMIT_REACHED",
-        message: `Personal 用户仅可试用 ${PERSONAL_LIMIT} 次，请升级 Business。`,
+        message: "Personal 用户仅可试用 3 次，请升级 Business。",
       },
       { status: 402 }
     );
   }
 
-  const input = {
-    recipient: body.recipient.trim(),
-    purpose: body.purpose.trim(),
-    details,
-    tone: body.tone as Tone,
-  };
+  const prompt = buildUserPrompt(body.mailType as MailTypeSlug, {
+    recipient: body.recipient,
+    purpose: body.purpose,
+    details: body.details,
+    tone: body.tone,
+  });
 
-  const prompt = buildUserPrompt(body.mailType as MailTypeSlug, input);
-  const qwenStream = await streamChatCompletionFromQwen([{ role: "user", content: prompt }]);
+  const qwenStream = await streamBusinessMailFromQwen(prompt);
 
   const encoder = new TextEncoder();
   let fullText = "";
@@ -93,46 +105,31 @@ export async function POST(req: Request) {
 
       try {
         const generated = splitSubjectAndBody(fullText);
+
         const [savedEmail] = await db
           .insert(emails)
           .values({
             userId,
             emailType: body.mailType,
             subject: generated.subject,
-            recipient: input.recipient,
-            tone: input.tone,
-            chineseInput: serializeChineseInput(input),
+            recipient: body.recipient,
+            tone: body.tone,
+            chineseInput: `purpose=${body.purpose}; details=${body.details}`,
             russianOutput: generated.body,
             updatedAt: new Date(),
           })
           .returning();
 
-        const [savedUserMessage] = await db
-          .insert(emailMessages)
-          .values({
-            emailId: savedEmail.id,
-            userId,
-            role: "user",
-            messageType: "initial_request",
-            content: buildInitialRequestSummary(input),
-          })
-          .returning();
+        let updatedPlan = plan;
+        if (plan.planType === "personal") {
+          const [updated] = await db
+            .update(userPlans)
+            .set({ trialUsed: sql`${userPlans.trialUsed} + 1`, updatedAt: new Date() })
+            .where(and(eq(userPlans.userId, userId), eq(userPlans.planType, "personal")))
+            .returning();
 
-        const [savedAssistantMessage] = await db
-          .insert(emailMessages)
-          .values({
-            emailId: savedEmail.id,
-            userId,
-            role: "assistant",
-            messageType: "draft",
-            content: formatDraftContent(generated.subject, generated.body),
-            subject: generated.subject,
-            body: generated.body,
-          })
-          .returning();
-
-        const updatedPlan = await incrementPlanUsageIfNeeded(db, plan, userId);
-        const planInfo = buildPlanInfo(updatedPlan);
+          if (updated) updatedPlan = updated;
+        }
 
         await trackEvent({
           eventName: "generate_success",
@@ -141,7 +138,7 @@ export async function POST(req: Request) {
           statusCode: 200,
           responseMs: Date.now() - startTime,
           userAgent,
-          details: `mailType=${body.mailType};plan=${updatedPlan.planType};trialUsed=${updatedPlan.trialUsed};emailId=${savedEmail.id}`,
+          details: `mailType=${body.mailType};plan=${updatedPlan.planType};trialUsed=${updatedPlan.trialUsed}`,
         });
 
         controller.enqueue(
@@ -149,8 +146,11 @@ export async function POST(req: Request) {
             `data: ${JSON.stringify({
               type: "done",
               email: savedEmail,
-              messages: [savedUserMessage, savedAssistantMessage],
-              plan: planInfo,
+              plan: {
+                type: updatedPlan.planType,
+                trialUsed: updatedPlan.trialUsed,
+                trialRemaining: updatedPlan.planType === "personal" ? Math.max(0, PERSONAL_LIMIT - updatedPlan.trialUsed) : null,
+              },
             })}\n\n`
           )
         );
