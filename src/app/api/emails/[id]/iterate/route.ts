@@ -1,54 +1,62 @@
 export const maxDuration = 60;
 
 import { auth } from "@clerk/nextjs/server";
+import { and, asc, eq } from "drizzle-orm";
 import { trackEvent } from "@/lib/analytics/track-event";
 import { getDb } from "@/lib/db";
 import { emailMessages, emails } from "@/lib/db/schema";
-import { buildInitialRequestSummary, formatDraftContent, serializeChineseInput } from "@/lib/email-thread";
-import { isMailTypeSlug, type MailTypeSlug } from "@/lib/mail-types";
-import { buildUserPrompt, isTone, type Tone } from "@/lib/prompts";
+import { buildThreadForModel, formatDraftContent } from "@/lib/email-thread";
 import { buildPlanInfo, getActiveUserPlan, incrementPlanUsageIfNeeded, PERSONAL_LIMIT } from "@/lib/plans";
+import { buildRevisionPrompt } from "@/lib/prompts";
 import { splitSubjectAndBody, streamChatCompletionFromQwen } from "@/lib/qwen";
 
 type RequestBody = {
-  mailType: string;
-  recipient: string;
-  purpose: string;
-  details?: string;
-  tone: string;
+  instruction?: string;
 };
 
-export async function POST(req: Request) {
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const startTime = Date.now();
   const userAgent = req.headers.get("user-agent") ?? undefined;
-  const route = "/api/generate-email";
+  const route = "/api/emails/[id]/iterate";
   const { userId } = await auth();
 
   if (!userId) {
-    await trackEvent({ eventName: "generate_unauthorized", route, statusCode: 401, responseMs: Date.now() - startTime, userAgent });
+    await trackEvent({ eventName: "iterate_unauthorized", route, statusCode: 401, responseMs: Date.now() - startTime, userAgent });
     return new Response("Unauthorized", { status: 401 });
   }
 
+  const { id } = await params;
   const body = (await req.json()) as RequestBody;
-  const details = body.details?.trim() ?? "";
+  const instruction = body.instruction?.trim() ?? "";
 
-  if (!body?.mailType || !body?.recipient?.trim() || !body?.purpose?.trim() || !isTone(body?.tone) || !isMailTypeSlug(body.mailType)) {
-    await trackEvent({ eventName: "generate_bad_request", route, userId, statusCode: 400, responseMs: Date.now() - startTime, userAgent });
-    return new Response("Invalid request payload", { status: 400 });
+  if (!instruction) {
+    await trackEvent({ eventName: "iterate_bad_request", route, userId, statusCode: 400, responseMs: Date.now() - startTime, userAgent, details: "Missing instruction" });
+    return new Response("Missing instruction", { status: 400 });
   }
 
   const db = getDb();
+  const [email] = await db
+    .select()
+    .from(emails)
+    .where(and(eq(emails.id, id), eq(emails.userId, userId)))
+    .limit(1);
+
+  if (!email) {
+    await trackEvent({ eventName: "iterate_not_found", route, userId, statusCode: 404, responseMs: Date.now() - startTime, userAgent, details: `id=${id}` });
+    return new Response("Not found", { status: 404 });
+  }
+
   const plan = await getActiveUserPlan(db, userId);
 
   if (plan.planType === "personal" && plan.trialUsed >= PERSONAL_LIMIT) {
     await trackEvent({
-      eventName: "generate_blocked_trial_limit",
+      eventName: "iterate_blocked_trial_limit",
       route,
       userId,
       statusCode: 402,
       responseMs: Date.now() - startTime,
       userAgent,
-      details: `trialUsed=${plan.trialUsed}`,
+      details: `id=${id};trialUsed=${plan.trialUsed}`,
     });
 
     return Response.json(
@@ -60,15 +68,14 @@ export async function POST(req: Request) {
     );
   }
 
-  const input = {
-    recipient: body.recipient.trim(),
-    purpose: body.purpose.trim(),
-    details,
-    tone: body.tone as Tone,
-  };
+  const storedMessages = await db
+    .select()
+    .from(emailMessages)
+    .where(and(eq(emailMessages.emailId, id), eq(emailMessages.userId, userId)))
+    .orderBy(asc(emailMessages.createdAt));
 
-  const prompt = buildUserPrompt(body.mailType as MailTypeSlug, input);
-  const qwenStream = await streamChatCompletionFromQwen([{ role: "user", content: prompt }]);
+  const conversation = [...buildThreadForModel(email, storedMessages), { role: "user", content: buildRevisionPrompt(instruction) } as const];
+  const qwenStream = await streamChatCompletionFromQwen(conversation);
 
   const encoder = new TextEncoder();
   let fullText = "";
@@ -84,7 +91,7 @@ export async function POST(req: Request) {
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "chunk", delta: value })}\n\n`));
         }
       } catch {
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "error", message: "生成失败" })}\n\n`));
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "error", message: "优化失败" })}\n\n`));
         controller.close();
         return;
       } finally {
@@ -93,35 +100,22 @@ export async function POST(req: Request) {
 
       try {
         const generated = splitSubjectAndBody(fullText);
-        const [savedEmail] = await db
-          .insert(emails)
-          .values({
-            userId,
-            emailType: body.mailType,
-            subject: generated.subject,
-            recipient: input.recipient,
-            tone: input.tone,
-            chineseInput: serializeChineseInput(input),
-            russianOutput: generated.body,
-            updatedAt: new Date(),
-          })
-          .returning();
 
         const [savedUserMessage] = await db
           .insert(emailMessages)
           .values({
-            emailId: savedEmail.id,
+            emailId: email.id,
             userId,
             role: "user",
-            messageType: "initial_request",
-            content: buildInitialRequestSummary(input),
+            messageType: "revision_request",
+            content: instruction,
           })
           .returning();
 
         const [savedAssistantMessage] = await db
           .insert(emailMessages)
           .values({
-            emailId: savedEmail.id,
+            emailId: email.id,
             userId,
             role: "assistant",
             messageType: "draft",
@@ -131,31 +125,37 @@ export async function POST(req: Request) {
           })
           .returning();
 
+        const [updatedEmail] = await db
+          .update(emails)
+          .set({ subject: generated.subject, russianOutput: generated.body, updatedAt: new Date() })
+          .where(eq(emails.id, email.id))
+          .returning();
+
         const updatedPlan = await incrementPlanUsageIfNeeded(db, plan, userId);
         const planInfo = buildPlanInfo(updatedPlan);
 
         await trackEvent({
-          eventName: "generate_success",
+          eventName: "iterate_success",
           route,
           userId,
           statusCode: 200,
           responseMs: Date.now() - startTime,
           userAgent,
-          details: `mailType=${body.mailType};plan=${updatedPlan.planType};trialUsed=${updatedPlan.trialUsed};emailId=${savedEmail.id}`,
+          details: `id=${id};plan=${updatedPlan.planType};trialUsed=${updatedPlan.trialUsed}`,
         });
 
         controller.enqueue(
           encoder.encode(
             `data: ${JSON.stringify({
               type: "done",
-              email: savedEmail,
+              email: updatedEmail,
               messages: [savedUserMessage, savedAssistantMessage],
               plan: planInfo,
             })}\n\n`
           )
         );
       } catch {
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "error", message: "保存失败" })}\n\n`));
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "error", message: "保存优化结果失败" })}\n\n`));
       }
 
       controller.close();
