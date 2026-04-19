@@ -2,7 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { and, desc, eq } from "drizzle-orm";
 import { trackEvent } from "@/lib/analytics/track-event";
 import { getDb } from "@/lib/db";
-import { emails } from "@/lib/db/schema";
+import { emailMessages, emails } from "@/lib/db/schema";
 
 export async function GET() {
   const startTime = Date.now();
@@ -26,7 +26,7 @@ export async function GET() {
     .select()
     .from(emails)
     .where(eq(emails.userId, userId))
-    .orderBy(desc(emails.createdAt))
+    .orderBy(desc(emails.updatedAt), desc(emails.createdAt))
     .limit(100);
 
   await trackEvent({
@@ -72,6 +72,10 @@ export async function DELETE(req: Request) {
   }
 
   const db = getDb();
+
+  await db
+    .delete(emailMessages)
+    .where(and(eq(emailMessages.emailId, body.id), eq(emailMessages.userId, userId)));
 
   const [deleted] = await db
     .delete(emails)

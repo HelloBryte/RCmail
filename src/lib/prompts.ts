@@ -1,10 +1,17 @@
 import type { MailTypeSlug } from "@/lib/mail-types";
 
+export type Tone = "formal" | "friendly" | "firm";
+
 type PromptInput = {
   recipient: string;
   purpose: string;
   details: string;
-  tone: "formal" | "friendly" | "firm";
+  tone: Tone;
+};
+
+type DraftContext = {
+  subject: string;
+  body: string;
 };
 
 export const BASE_SYSTEM_PROMPT = `你是一位专业的中俄商务邮件翻译与写作专家，精通俄罗斯商务礼仪和邮件规范。
@@ -15,6 +22,7 @@ export const BASE_SYSTEM_PROMPT = `你是一位专业的中俄商务邮件翻译
 4. 语气根据用户选择调整，但始终保持俄罗斯商务礼貌标准
 5. 信息简洁明了，段落清晰，每段不超过4-5行
 6. 日期格式：日.月.年（如24.03.2026）
+7. 无论是首次生成还是后续修改，都只返回可直接发送的完整邮件，不解释修改思路
 【俄罗斯商务礼仪要点】
 - 首次联系用"Уважаемые господа"，知道姓名用"Уважаемый + 名+父称"或"Уважаемый господин + 姓"
 - 结尾必须使用礼貌结束语（С уважением / С наилучшими пожеланиями）
@@ -69,6 +77,10 @@ const TASK_PROMPTS: Record<MailTypeSlug, string> = {
 【俄语关键词】счёт、оплата、задолженность、срок`,
 };
 
+export function isTone(value: string): value is Tone {
+  return value === "formal" || value === "friendly" || value === "firm";
+}
+
 export function buildUserPrompt(mailType: MailTypeSlug, input: PromptInput) {
   return `${TASK_PROMPTS[mailType]}
 【用户输入】
@@ -78,4 +90,32 @@ export function buildUserPrompt(mailType: MailTypeSlug, input: PromptInput) {
 - 语气风格：${input.tone}
 
 请直接返回可复制发送的完整俄语商务邮件。`;
+}
+
+export function buildRevisionPrompt(instruction: string, draft?: DraftContext) {
+  const trimmedInstruction = instruction.trim();
+
+  if (!draft) {
+    return `请基于上下文中最新一版俄语商务邮件继续修改和优化。
+【本轮修改要求】
+${trimmedInstruction}
+
+请直接返回修改后的完整俄语商务邮件，必须保留主题行，不要解释修改原因。`;
+  }
+
+  return `请基于下方“当前邮件”进行增量优化，只修改本轮指令要求涉及的内容。
+【当前邮件主题】
+${draft.subject || "(без темы)"}
+
+【当前邮件正文】
+${draft.body.trim() || "(正文为空)"}
+
+【本轮修改要求】
+${trimmedInstruction}
+
+【执行规则】
+1. 这是对当前邮件的局部优化，未被要求修改的事实、时间、联系方式、称呼和语气请尽量保持不变。
+2. 如果用户要求调整结构，可以重排必要段落，但不要无故重写整封邮件。
+3. 输出必须仍然是可直接发送的完整俄语商务邮件，并保留主题行。
+4. 不要解释修改原因，不要输出备注、标题说明或项目符号总结。`;
 }

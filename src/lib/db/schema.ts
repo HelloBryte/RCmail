@@ -16,11 +16,28 @@ export const emails = pgTable("emails", {
 export type EmailRow = typeof emails.$inferSelect;
 export type NewEmailRow = typeof emails.$inferInsert;
 
+export const emailMessages = pgTable("email_messages", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  emailId: text("email_id")
+    .notNull()
+    .references(() => emails.id, { onDelete: "cascade" }),
+  userId: text("user_id").notNull(),
+  role: text("role").notNull(),
+  messageType: text("message_type").notNull(),
+  content: text("content").notNull(),
+  subject: text("subject"),
+  body: text("body"),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+});
+
+export type EmailMessageRow = typeof emailMessages.$inferSelect;
+export type NewEmailMessageRow = typeof emailMessages.$inferInsert;
+
 export const userPlans = pgTable("user_plans", {
   userId: text("user_id").primaryKey(),
   planType: text("plan_type").notNull().default("personal"),
-  planVariant: text("plan_variant").notNull().default("personal"), // 'personal' | 'monthly' | 'yearly' | 'lifetime'
-  planExpiry: timestamp("plan_expiry", { mode: "date" }), // null = no expiry (personal or lifetime only)
+  planVariant: text("plan_variant").notNull().default("personal"),
+  planExpiry: timestamp("plan_expiry", { mode: "date" }),
   trialUsed: integer("trial_used").notNull().default(0),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
