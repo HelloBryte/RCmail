@@ -888,6 +888,43 @@ export default function ComposePage({ params }: { params: Promise<{ mailType: st
           )}
         </div>
 
+        <div className="scroll-mt-24 rounded-2xl border border-emerald-200 bg-[linear-gradient(180deg,rgba(236,253,245,0.95),rgba(255,255,255,0.98))] p-6 shadow-sm sm:p-8">
+          <div>
+            <p className="text-xs uppercase tracking-[0.16em] text-emerald-600">继续优化这封邮件</p>
+            <h3 className="section-title mt-2 text-xl font-bold text-gray-900">让 AI 基于当前邮件继续多轮对话优化</h3>
+            <p className="mt-2 text-sm text-gray-600">
+              例如：语气更正式、精简第一段、补充联系方式与时间、改成英文版本、先说明目的再讲背景。
+            </p>
+          </div>
+
+          <form onSubmit={handleIterate} className="mt-5 space-y-4">
+            <textarea
+              ref={iterationInputRef}
+              value={iterationInstruction}
+              onChange={(event) => setIterationInstruction(event.target.value)}
+              placeholder={canIterate ? "输入你希望 AI 如何调整当前邮件内容" : "先生成或打开一封历史邮件后，才能继续多轮优化"}
+              disabled={!canIterate || isGenerating || isLoadingThread || isAccepting}
+              className="min-h-32 w-full rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-400 disabled:cursor-not-allowed disabled:bg-gray-50"
+            />
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-xs text-emerald-700">
+                {canIterate
+                  ? latestPendingRound
+                    ? "下一轮会基于右侧优化稿继续对话；你也可以先采纳或放弃当前这轮。"
+                    : "每轮优化都会保留当前邮件上下文，并优先做局部增量修改。"
+                  : "未生成邮件时，优化输入框会保持置灰。"}
+              </p>
+              <button
+                type="submit"
+                disabled={!canIterate || !iterationInstruction.trim() || isGenerating || isIterating || isLoadingThread || isAccepting}
+                className="rounded-lg bg-emerald-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isIterating ? "优化中..." : "继续用 AI 优化当前邮件"}
+              </button>
+            </div>
+          </form>
+        </div>
+
         <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -935,43 +972,6 @@ export default function ComposePage({ params }: { params: Promise<{ mailType: st
               ))}
             </div>
           )}
-        </div>
-
-        <div className="rounded-2xl border border-emerald-200 bg-[linear-gradient(180deg,rgba(236,253,245,0.95),rgba(255,255,255,0.96))] p-6 shadow-sm sm:p-8 lg:sticky lg:bottom-4">
-          <div>
-            <p className="text-xs uppercase tracking-[0.16em] text-emerald-600">继续优化这封邮件</p>
-            <h3 className="section-title mt-2 text-xl font-bold text-gray-900">让 AI 基于当前邮件继续多轮对话优化</h3>
-            <p className="mt-2 text-sm text-gray-600">
-              例如：语气更正式、精简第一段、补充联系方式与时间、改成英文版本、先说明目的再讲背景。
-            </p>
-          </div>
-
-          <form onSubmit={handleIterate} className="mt-5 space-y-4">
-            <textarea
-              ref={iterationInputRef}
-              value={iterationInstruction}
-              onChange={(event) => setIterationInstruction(event.target.value)}
-              placeholder={canIterate ? "输入你希望 AI 如何调整当前邮件内容" : "先生成或打开一封历史邮件后，才能继续多轮优化"}
-              disabled={!canIterate || isGenerating || isLoadingThread || isAccepting}
-              className="min-h-32 w-full rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-400 disabled:cursor-not-allowed disabled:bg-gray-50"
-            />
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="text-xs text-emerald-700">
-                {canIterate
-                  ? latestPendingRound
-                    ? "下一轮会基于右侧优化稿继续对话；你也可以先采纳或放弃当前这轮。"
-                    : "每轮优化都会保留当前邮件上下文，并优先做局部增量修改。"
-                  : "未生成邮件时，优化输入框会保持置灰。"}
-              </p>
-              <button
-                type="submit"
-                disabled={!canIterate || !iterationInstruction.trim() || isGenerating || isIterating || isLoadingThread || isAccepting}
-                className="rounded-lg bg-emerald-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isIterating ? "优化中..." : "继续用 AI 优化当前邮件"}
-              </button>
-            </div>
-          </form>
         </div>
       </div>
     </div>
