@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { and, asc, eq } from "drizzle-orm";
 import { trackEvent } from "@/lib/analytics/track-event";
 import { getDb } from "@/lib/db";
+import { isMissingDbObjectError } from "@/lib/db/error";
 import { emailMessages, emails } from "@/lib/db/schema";
 import { formatDraftContent, normalizeThreadMessages } from "@/lib/email-thread";
 
@@ -57,11 +58,20 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     return new Response("Not found", { status: 404 });
   }
 
-  const storedMessages = await db
-    .select()
-    .from(emailMessages)
-    .where(and(eq(emailMessages.emailId, id), eq(emailMessages.userId, userId)))
-    .orderBy(asc(emailMessages.createdAt));
+  let storedMessages: typeof emailMessages.$inferSelect[] = [];
+  try {
+    storedMessages = await db
+      .select()
+      .from(emailMessages)
+      .where(and(eq(emailMessages.emailId, id), eq(emailMessages.userId, userId)))
+      .orderBy(asc(emailMessages.createdAt));
+  } catch (error) {
+    if (isMissingDbObjectError(error, ["email_messages"])) {
+      console.warn("email_messages is unavailable, falling back to synthetic thread messages");
+    } else {
+      throw error;
+    }
+  }
 
   const messages = normalizeThreadMessages(email, storedMessages);
 
@@ -168,8 +178,30 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     };
   });
 
-  const insertedMessages =
-    preparedMessages.length > 0 ? await db.insert(emailMessages).values(preparedMessages).returning() : [];
+  let insertedMessages: typeof emailMessages.$inferSelect[] = [];
+  const fallbackMessages = preparedMessages.map((message) => ({
+    id: `compat-${crypto.randomUUID()}`,
+    emailId: email.id,
+    userId,
+    role: message.role,
+    messageType: message.messageType,
+    content: message.content,
+    subject: message.subject ?? null,
+    body: message.body ?? null,
+    createdAt: message.createdAt,
+  }));
+
+  if (preparedMessages.length > 0) {
+    try {
+      insertedMessages = await db.insert(emailMessages).values(preparedMessages).returning();
+    } catch (error) {
+      if (isMissingDbObjectError(error, ["email_messages"])) {
+        console.warn("email_messages is unavailable, returning in-memory thread messages");
+      } else {
+        throw error;
+      }
+    }
+  }
 
   const [updatedEmail] = await db
     .update(emails)
@@ -190,5 +222,5 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     details: `id=${id};messages=${insertedMessages.length}`,
   });
 
-  return Response.json({ email: updatedEmail, messages: insertedMessages });
+  return Response.json({ email: updatedEmail, messages: insertedMessages.length > 0 ? insertedMessages : fallbackMessages });
 }

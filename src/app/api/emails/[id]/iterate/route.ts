@@ -113,8 +113,14 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       try {
         const generated = splitSubjectAndBody(fullText);
 
-        const updatedPlan = await incrementPlanUsageIfNeeded(db, plan, userId);
-        const planInfo = buildPlanInfo(updatedPlan);
+        let effectivePlan = plan;
+        try {
+          effectivePlan = await incrementPlanUsageIfNeeded(db, plan, userId);
+        } catch (error) {
+          console.error("Failed to update plan usage after iteration", error);
+        }
+
+        const planInfo = buildPlanInfo(effectivePlan);
 
         await trackEvent({
           eventName: "iterate_success",
@@ -123,7 +129,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
           statusCode: 200,
           responseMs: Date.now() - startTime,
           userAgent,
-          details: `id=${id};plan=${updatedPlan.planType};trialUsed=${updatedPlan.trialUsed};draftOnly=true`,
+          details: `id=${id};plan=${effectivePlan.planType};trialUsed=${effectivePlan.trialUsed};draftOnly=true`,
         });
 
         controller.enqueue(
@@ -138,7 +144,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             })}\n\n`
           )
         );
-      } catch {
+      } catch (error) {
+        console.error("Failed to finalize iterated draft", error);
         controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "error", message: "保存优化结果失败" })}\n\n`));
       }
 

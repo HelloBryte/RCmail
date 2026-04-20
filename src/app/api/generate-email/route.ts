@@ -3,8 +3,9 @@ export const maxDuration = 60;
 import { auth } from "@clerk/nextjs/server";
 import { trackEvent } from "@/lib/analytics/track-event";
 import { getDb } from "@/lib/db";
+import { isMissingDbObjectError } from "@/lib/db/error";
 import { emailMessages, emails } from "@/lib/db/schema";
-import { buildInitialRequestSummary, formatDraftContent, serializeChineseInput } from "@/lib/email-thread";
+import { buildInitialRequestSummary, formatDraftContent, normalizeThreadMessages, serializeChineseInput } from "@/lib/email-thread";
 import { isMailTypeSlug, type MailTypeSlug } from "@/lib/mail-types";
 import { buildUserPrompt, isTone, type Tone } from "@/lib/prompts";
 import { buildPlanInfo, getActiveUserPlan, incrementPlanUsageIfNeeded, PERSONAL_LIMIT } from "@/lib/plans";
@@ -93,46 +94,71 @@ export async function POST(req: Request) {
 
       try {
         const generated = splitSubjectAndBody(fullText);
-        const [savedEmail] = await db
-          .insert(emails)
-          .values({
-            userId,
-            emailType: body.mailType,
-            subject: generated.subject,
-            recipient: input.recipient,
-            tone: input.tone,
-            chineseInput: serializeChineseInput(input),
-            russianOutput: generated.body,
-            updatedAt: new Date(),
-          })
-          .returning();
+        let savedEmail;
+        try {
+          [savedEmail] = await db
+            .insert(emails)
+            .values({
+              userId,
+              emailType: body.mailType,
+              subject: generated.subject,
+              recipient: input.recipient,
+              tone: input.tone,
+              chineseInput: serializeChineseInput(input),
+              russianOutput: generated.body,
+              updatedAt: new Date(),
+            })
+            .returning();
+        } catch (error) {
+          console.error("Failed to save generated email", error);
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "error", message: "保存失败" })}\n\n`));
+          controller.close();
+          return;
+        }
 
-        const [savedUserMessage] = await db
-          .insert(emailMessages)
-          .values({
-            emailId: savedEmail.id,
-            userId,
-            role: "user",
-            messageType: "initial_request",
-            content: buildInitialRequestSummary(input),
-          })
-          .returning();
+        let responseMessages = normalizeThreadMessages(savedEmail, []);
+        try {
+          const [savedUserMessage] = await db
+            .insert(emailMessages)
+            .values({
+              emailId: savedEmail.id,
+              userId,
+              role: "user",
+              messageType: "initial_request",
+              content: buildInitialRequestSummary(input),
+            })
+            .returning();
 
-        const [savedAssistantMessage] = await db
-          .insert(emailMessages)
-          .values({
-            emailId: savedEmail.id,
-            userId,
-            role: "assistant",
-            messageType: "draft",
-            content: formatDraftContent(generated.subject, generated.body),
-            subject: generated.subject,
-            body: generated.body,
-          })
-          .returning();
+          const [savedAssistantMessage] = await db
+            .insert(emailMessages)
+            .values({
+              emailId: savedEmail.id,
+              userId,
+              role: "assistant",
+              messageType: "draft",
+              content: formatDraftContent(generated.subject, generated.body),
+              subject: generated.subject,
+              body: generated.body,
+            })
+            .returning();
 
-        const updatedPlan = await incrementPlanUsageIfNeeded(db, plan, userId);
-        const planInfo = buildPlanInfo(updatedPlan);
+          responseMessages = normalizeThreadMessages(savedEmail, [savedUserMessage, savedAssistantMessage]);
+        } catch (error) {
+          if (isMissingDbObjectError(error, ["email_messages"])) {
+            console.warn("email_messages is unavailable, falling back to synthetic thread messages");
+          } else {
+            console.error("Failed to persist generated thread messages", error);
+          }
+        }
+
+        let effectivePlan = plan;
+        try {
+          effectivePlan = await incrementPlanUsageIfNeeded(db, plan, userId);
+        } catch (error) {
+          console.error("Failed to update plan usage after generation", error);
+        }
+
+        const planInfo = buildPlanInfo(effectivePlan);
 
         await trackEvent({
           eventName: "generate_success",
@@ -141,7 +167,7 @@ export async function POST(req: Request) {
           statusCode: 200,
           responseMs: Date.now() - startTime,
           userAgent,
-          details: `mailType=${body.mailType};plan=${updatedPlan.planType};trialUsed=${updatedPlan.trialUsed};emailId=${savedEmail.id}`,
+          details: `mailType=${body.mailType};plan=${effectivePlan.planType};trialUsed=${effectivePlan.trialUsed};emailId=${savedEmail.id}`,
         });
 
         controller.enqueue(
@@ -149,12 +175,13 @@ export async function POST(req: Request) {
             `data: ${JSON.stringify({
               type: "done",
               email: savedEmail,
-              messages: [savedUserMessage, savedAssistantMessage],
+              messages: responseMessages,
               plan: planInfo,
             })}\n\n`
           )
         );
-      } catch {
+      } catch (error) {
+        console.error("Failed to finalize generated email", error);
         controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "error", message: "保存失败" })}\n\n`));
       }
 
