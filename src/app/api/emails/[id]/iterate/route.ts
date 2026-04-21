@@ -7,7 +7,7 @@ import { getDb } from "@/lib/db";
 import { emails } from "@/lib/db/schema";
 import { buildPlanInfo, getActiveUserPlan, incrementPlanUsageIfNeeded, PERSONAL_LIMIT } from "@/lib/plans";
 import { buildRevisionPrompt } from "@/lib/prompts";
-import { splitSubjectAndBody, streamChatCompletionFromQwen } from "@/lib/qwen";
+import { splitSubjectAndBody, streamChatCompletionFromQwen, translateBusinessMailToChinese } from "@/lib/qwen";
 
 type RequestBody = {
   instruction?: string;
@@ -112,6 +112,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
       try {
         const generated = splitSubjectAndBody(fullText);
+        const translated = await translateBusinessMailToChinese(generated);
 
         let effectivePlan = plan;
         try {
@@ -139,6 +140,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
               draft: {
                 subject: generated.subject,
                 body: generated.body,
+                translatedSubject: translated.subject,
+                translatedBody: translated.body,
               },
               plan: planInfo,
             })}\n\n`

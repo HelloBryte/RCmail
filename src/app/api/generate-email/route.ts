@@ -5,11 +5,11 @@ import { trackEvent } from "@/lib/analytics/track-event";
 import { getDb } from "@/lib/db";
 import { isMissingDbObjectError } from "@/lib/db/error";
 import { emailMessages, emails } from "@/lib/db/schema";
-import { buildInitialRequestSummary, formatDraftContent, normalizeThreadMessages, serializeChineseInput } from "@/lib/email-thread";
+import { buildInitialRequestSummary, normalizeThreadMessages, serializeAssistantDraftContent, serializeChineseInput } from "@/lib/email-thread";
 import { isMailTypeSlug, type MailTypeSlug } from "@/lib/mail-types";
 import { buildUserPrompt, isTone, type Tone } from "@/lib/prompts";
 import { buildPlanInfo, getActiveUserPlan, incrementPlanUsageIfNeeded, PERSONAL_LIMIT } from "@/lib/plans";
-import { splitSubjectAndBody, streamChatCompletionFromQwen } from "@/lib/qwen";
+import { splitSubjectAndBody, streamChatCompletionFromQwen, translateBusinessMailToChinese } from "@/lib/qwen";
 
 type RequestBody = {
   mailType: string;
@@ -94,6 +94,7 @@ export async function POST(req: Request) {
 
       try {
         const generated = splitSubjectAndBody(fullText);
+        const translated = await translateBusinessMailToChinese(generated);
         let savedEmail;
         try {
           [savedEmail] = await db
@@ -104,7 +105,7 @@ export async function POST(req: Request) {
               subject: generated.subject,
               recipient: input.recipient,
               tone: input.tone,
-              chineseInput: serializeChineseInput(input),
+              chineseInput: serializeChineseInput(input, translated),
               russianOutput: generated.body,
               updatedAt: new Date(),
             })
@@ -136,7 +137,7 @@ export async function POST(req: Request) {
               userId,
               role: "assistant",
               messageType: "draft",
-              content: formatDraftContent(generated.subject, generated.body),
+              content: serializeAssistantDraftContent(generated, translated),
               subject: generated.subject,
               body: generated.body,
             })

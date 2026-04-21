@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { parseChineseInput } from "@/lib/email-thread";
 import { getMailTypeBySlug, isMailTypeSlug } from "@/lib/mail-types";
 
 type HistoryItem = {
@@ -83,6 +84,7 @@ export function HistoryList() {
     <div className="space-y-4">
       {items.map((item) => {
         const title = isMailTypeSlug(item.emailType) ? getMailTypeBySlug(item.emailType).title : item.emailType;
+        const parsedInput = parseChineseInput(item.chineseInput);
         return (
           <article key={item.id} className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
             <div className="flex flex-wrap items-start justify-between gap-3">
@@ -109,10 +111,20 @@ export function HistoryList() {
                 </button>
               </div>
             </div>
-            <p className="mt-3 text-sm text-gray-500">中文输入: {item.chineseInput}</p>
-            <pre className="mt-2 whitespace-pre-wrap rounded-lg border border-gray-100 bg-gray-50 p-4 text-sm leading-7 text-gray-700">
-              {item.russianOutput}
-            </pre>
+            <div className="mt-3 space-y-2 text-sm text-gray-500">
+              <p>沟通目的: {parsedInput.purpose || "未记录"}</p>
+              <p>补充要点: {parsedInput.details || "无"}</p>
+            </div>
+            <div className="mt-3 grid gap-3 xl:grid-cols-2">
+              <pre className="whitespace-pre-wrap rounded-lg border border-gray-100 bg-gray-50 p-4 text-sm leading-7 text-gray-700">
+                {item.russianOutput}
+              </pre>
+              <pre className="whitespace-pre-wrap rounded-lg border border-emerald-100 bg-emerald-50/60 p-4 text-sm leading-7 text-gray-700">
+                {parsedInput.translation
+                  ? `主题: ${parsedInput.translation.subject || "（无主题）"}\n\n${parsedInput.translation.body || "（正文为空）"}`
+                  : "暂无中文版。重新生成或继续优化并采纳后，这里会显示中文翻译。"}
+              </pre>
+            </div>
           </article>
         );
       })}

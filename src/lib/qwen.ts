@@ -1,4 +1,4 @@
-import { BASE_SYSTEM_PROMPT } from "@/lib/prompts";
+import { BASE_SYSTEM_PROMPT, buildChineseTranslationPrompt, CHINESE_TRANSLATION_SYSTEM_PROMPT, type DraftContext } from "@/lib/prompts";
 
 export type QwenMessage = {
   role: "system" | "user" | "assistant";
@@ -10,15 +10,15 @@ type QwenResult = {
   body: string;
 };
 
-function withSystemPrompt(messages: QwenMessage[]) {
+function withSystemPrompt(messages: QwenMessage[], systemPrompt: string) {
   if (messages[0]?.role === "system") {
     return messages;
   }
 
-  return [{ role: "system", content: BASE_SYSTEM_PROMPT } satisfies QwenMessage, ...messages];
+  return [{ role: "system", content: systemPrompt } satisfies QwenMessage, ...messages];
 }
 
-async function requestQwen(messages: QwenMessage[], incrementalOutput: boolean) {
+async function requestQwen(messages: QwenMessage[], incrementalOutput: boolean, systemPrompt = BASE_SYSTEM_PROMPT) {
   const apiKey = process.env.DASHSCOPE_API_KEY;
   if (!apiKey) throw new Error("DASHSCOPE_API_KEY is required");
 
@@ -33,7 +33,7 @@ async function requestQwen(messages: QwenMessage[], incrementalOutput: boolean) 
     },
     body: JSON.stringify({
       model,
-      input: { messages: withSystemPrompt(messages) },
+      input: { messages: withSystemPrompt(messages, systemPrompt) },
       parameters: { result_format: "message", enable_thinking: false, incremental_output: incrementalOutput },
     }),
   });
@@ -51,10 +51,17 @@ export function splitSubjectAndBody(text: string): QwenResult {
     .split("\n")
     .map((line) => line.trim())
     .filter(Boolean);
-  const subjectLine = lines.find((line) => line.toLowerCase().startsWith("тема") || line.toLowerCase().startsWith("subject"));
+  const subjectLine = lines.find((line) => {
+    const normalized = line.toLowerCase();
+    return normalized.startsWith("тема") || normalized.startsWith("subject") || line.startsWith("主题");
+  });
 
   if (subjectLine) {
-    const subject = subjectLine.replace(/^тема\s*[:：-]?\s*/i, "").replace(/^subject\s*[:：-]?\s*/i, "").trim();
+    const subject = subjectLine
+      .replace(/^тема\s*[:：-]?\s*/i, "")
+      .replace(/^subject\s*[:：-]?\s*/i, "")
+      .replace(/^主题\s*[:：-]?\s*/i, "")
+      .trim();
     const body = lines.filter((line) => line !== subjectLine).join("\n").trim();
     return { subject: subject || "(без темы)", body };
   }
@@ -65,8 +72,8 @@ export function splitSubjectAndBody(text: string): QwenResult {
   };
 }
 
-export async function streamChatCompletionFromQwen(messages: QwenMessage[]): Promise<ReadableStream<string>> {
-  const response = await requestQwen(messages, true);
+export async function streamChatCompletionFromQwen(messages: QwenMessage[], systemPrompt = BASE_SYSTEM_PROMPT): Promise<ReadableStream<string>> {
+  const response = await requestQwen(messages, true, systemPrompt);
   const decoder = new TextDecoder();
   let sseBuffer = "";
 
@@ -104,8 +111,8 @@ export async function streamChatCompletionFromQwen(messages: QwenMessage[]): Pro
   });
 }
 
-export async function generateChatCompletionFromQwen(messages: QwenMessage[]): Promise<QwenResult> {
-  const response = await requestQwen(messages, false);
+export async function generateChatCompletionFromQwen(messages: QwenMessage[], systemPrompt = BASE_SYSTEM_PROMPT): Promise<QwenResult> {
+  const response = await requestQwen(messages, false, systemPrompt);
   const payload = await response.json();
   const raw: string = payload?.output?.choices?.[0]?.message?.content ?? "";
   const text = raw.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
@@ -123,4 +130,11 @@ export async function streamBusinessMailFromQwen(userPrompt: string): Promise<Re
 
 export async function generateBusinessMailFromQwen(userPrompt: string): Promise<QwenResult> {
   return generateChatCompletionFromQwen([{ role: "user", content: userPrompt }]);
+}
+
+export async function translateBusinessMailToChinese(draft: DraftContext): Promise<QwenResult> {
+  return generateChatCompletionFromQwen(
+    [{ role: "user", content: buildChineseTranslationPrompt(draft) }],
+    CHINESE_TRANSLATION_SYSTEM_PROMPT
+  );
 }

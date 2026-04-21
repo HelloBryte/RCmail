@@ -4,7 +4,7 @@ import { trackEvent } from "@/lib/analytics/track-event";
 import { getDb } from "@/lib/db";
 import { isMissingDbObjectError } from "@/lib/db/error";
 import { emailMessages, emails } from "@/lib/db/schema";
-import { formatDraftContent, normalizeThreadMessages } from "@/lib/email-thread";
+import { mapStoredThreadMessages, normalizeThreadMessages, parseChineseInput, serializeAssistantDraftContent, serializeChineseInput } from "@/lib/email-thread";
 
 type PersistMessageInput = {
   role?: string;
@@ -12,12 +12,16 @@ type PersistMessageInput = {
   content?: string;
   subject?: string | null;
   body?: string | null;
+  translatedSubject?: string | null;
+  translatedBody?: string | null;
   createdAt?: string;
 };
 
 type PatchBody = {
   subject?: string;
   body?: string;
+  translatedSubject?: string | null;
+  translatedBody?: string | null;
   messages?: PersistMessageInput[];
 };
 
@@ -107,6 +111,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const body = (await req.json()) as PatchBody;
   const subject = body.subject?.trim() ?? "";
   const draftBody = body.body?.trim() ?? "";
+  const translatedSubject = body.translatedSubject?.trim() ?? "";
+  const translatedBody = body.translatedBody?.trim() ?? "";
   const pendingMessages = Array.isArray(body.messages) ? body.messages : [];
 
   if (!draftBody) {
@@ -170,7 +176,16 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       messageType: message.messageType as "revision_request" | "draft",
       content:
         message.role === "assistant"
-          ? formatDraftContent(message.subject?.trim() || subject || "(без темы)", message.body?.trim() || draftBody)
+          ? serializeAssistantDraftContent(
+              {
+                subject: message.subject?.trim() || subject || "(без темы)",
+                body: message.body?.trim() || draftBody,
+              },
+              {
+                subject: message.translatedSubject?.trim() || "",
+                body: message.translatedBody?.trim() || "",
+              }
+            )
           : message.content!.trim(),
       subject: message.role === "assistant" ? message.subject?.trim() || subject || "(без темы)" : null,
       body: message.role === "assistant" ? message.body?.trim() || draftBody : null,
@@ -203,11 +218,24 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     }
   }
 
+  const existingInput = parseChineseInput(email.chineseInput);
   const [updatedEmail] = await db
     .update(emails)
     .set({
       subject: subject || "(без темы)",
       russianOutput: draftBody,
+      chineseInput: serializeChineseInput(
+        {
+          purpose: existingInput.purpose,
+          details: existingInput.details,
+        },
+        translatedSubject || translatedBody
+          ? {
+              subject: translatedSubject,
+              body: translatedBody,
+            }
+          : null
+      ),
       updatedAt: new Date(),
     })
     .where(and(eq(emails.id, id), eq(emails.userId, userId)))
@@ -222,5 +250,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     details: `id=${id};messages=${insertedMessages.length}`,
   });
 
-  return Response.json({ email: updatedEmail, messages: insertedMessages.length > 0 ? insertedMessages : fallbackMessages });
+  return Response.json({
+    email: updatedEmail,
+    messages: mapStoredThreadMessages(updatedEmail, insertedMessages.length > 0 ? insertedMessages : fallbackMessages),
+  });
 }

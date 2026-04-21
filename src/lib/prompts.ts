@@ -9,7 +9,7 @@ type PromptInput = {
   tone: Tone;
 };
 
-type DraftContext = {
+export type DraftContext = {
   subject: string;
   body: string;
 };
@@ -28,6 +28,14 @@ export const BASE_SYSTEM_PROMPT = `你是一位专业的中俄商务邮件翻译
 - 结尾必须使用礼貌结束语（С уважением / С наилучшими пожеланиями）
 - 催款等敏感话题需委婉但坚定，避免直接威胁
 - 表达感谢和期待合作是俄罗斯商务邮件的常见收尾方式`;
+
+export const CHINESE_TRANSLATION_SYSTEM_PROMPT = `你是一位专业的俄中商务邮件翻译专家。
+【核心要求】
+1. 将俄语商务邮件准确翻译成自然、专业、可直接发送的简体中文商务邮件
+2. 保留原邮件的事实信息、语气强度、礼貌程度、段落结构和行动要求
+3. 保留“主题 + 正文”的邮件结构，输出中的主题行必须以“主题:”开头
+4. 不要添加解释、注释、括号说明、译者备注或多余标题
+5. 商务表达要符合中文邮件习惯，但不得擅自增删原意`;
 
 const TASK_PROMPTS: Record<MailTypeSlug, string> = {
   "exhibition-invitation": `【任务】撰写俄语展会邀请商务邮件
@@ -118,4 +126,20 @@ ${trimmedInstruction}
 2. 如果用户要求调整结构，可以重排必要段落，但不要无故重写整封邮件。
 3. 输出必须仍然是可直接发送的完整俄语商务邮件，并保留主题行。
 4. 不要解释修改原因，不要输出备注、标题说明或项目符号总结。`;
+}
+
+export function buildChineseTranslationPrompt(draft: DraftContext) {
+  return `请将下方俄语商务邮件完整翻译为简体中文商务邮件。
+
+【俄语邮件主题】
+${draft.subject || "(без темы)"}
+
+【俄语邮件正文】
+${draft.body.trim() || "(正文为空)"}
+
+【输出要求】
+1. 仅输出可直接发送的完整中文邮件。
+2. 第一行必须使用“主题: ”作为主题行前缀。
+3. 保留原始商务语气、结构、时间、金额、联系人、公司名和行动要求。
+4. 不要解释翻译思路，不要输出额外说明。`;
 }

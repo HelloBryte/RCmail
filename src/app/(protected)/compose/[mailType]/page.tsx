@@ -4,7 +4,7 @@ import Link from "next/link";
 import { type FormEvent, use, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { EmailDiffView } from "@/components/email-diff-view";
-import { formatDraftContent, getComposeInputFromEmail, normalizeTone } from "@/lib/email-thread";
+import { formatChineseDraftContent, formatDraftContent, getComposeInputFromEmail, normalizeTone, parseChineseInput } from "@/lib/email-thread";
 import { getMailTypeBySlug, isMailTypeSlug, type MailTypeSlug } from "@/lib/mail-types";
 import type { Tone } from "@/lib/prompts";
 
@@ -39,6 +39,8 @@ type ConversationMessage = {
   content: string;
   subject: string | null;
   body: string | null;
+  translatedSubject?: string | null;
+  translatedBody?: string | null;
   createdAt: string;
 };
 
@@ -50,6 +52,8 @@ type ThreadResponse = {
 type EmailDraft = {
   subject: string;
   body: string;
+  translatedSubject?: string | null;
+  translatedBody?: string | null;
 };
 
 type PendingRound = {
@@ -112,7 +116,22 @@ function buildThreadStorageKey(mailType: string, emailId: string) {
 }
 
 function createEmptyDraft(): EmailDraft {
-  return { subject: "", body: "" };
+  return { subject: "", body: "", translatedSubject: null, translatedBody: null };
+}
+
+function getDraftFromEmail(email: Pick<SavedEmail, "subject" | "russianOutput" | "chineseInput">): EmailDraft {
+  const translation = parseChineseInput(email.chineseInput).translation;
+
+  return {
+    subject: email.subject,
+    body: email.russianOutput,
+    translatedSubject: translation?.subject ?? null,
+    translatedBody: translation?.body ?? null,
+  };
+}
+
+function hasChineseTranslation(draft: EmailDraft) {
+  return Boolean(draft.translatedSubject?.trim() || draft.translatedBody?.trim());
 }
 
 function createLocalMessage(params: {
@@ -122,6 +141,8 @@ function createLocalMessage(params: {
   content: string;
   subject?: string | null;
   body?: string | null;
+  translatedSubject?: string | null;
+  translatedBody?: string | null;
   createdAt: string;
 }) {
   return {
@@ -133,6 +154,8 @@ function createLocalMessage(params: {
     content: params.content,
     subject: params.subject ?? null,
     body: params.body ?? null,
+    translatedSubject: params.translatedSubject ?? null,
+    translatedBody: params.translatedBody ?? null,
     createdAt: params.createdAt,
   } satisfies ConversationMessage;
 }
@@ -248,6 +271,9 @@ export default function ComposePage({ params }: { params: Promise<{ mailType: st
   const latestPendingRound = pendingRounds.at(-1) ?? null;
   const displayBody = streamingBody || activeDraft.body;
   const displaySubject = isGenerating && streamingBody ? "(生成中...)" : activeDraft.subject;
+  const displayTranslatedSubject = isGenerating ? "" : activeDraft.translatedSubject ?? "";
+  const displayTranslatedBody = isGenerating ? "" : activeDraft.translatedBody ?? "";
+  const canCopyChineseDraft = !isGenerating && hasChineseTranslation(activeDraft);
   const canIterate = Boolean(emailId && activeDraft.body.trim());
 
   useEffect(() => {
@@ -337,7 +363,7 @@ export default function ComposePage({ params }: { params: Promise<{ mailType: st
         setPurpose(input.purpose);
         setDetails(input.details);
         setTone(normalizeTone(data.email.tone));
-        setAcceptedDraft({ subject: data.email.subject, body: data.email.russianOutput });
+        setAcceptedDraft(getDraftFromEmail(data.email));
         setStreamingBody("");
         setEmailId(data.email.id);
         setConversation(data.messages);
@@ -465,10 +491,7 @@ export default function ComposePage({ params }: { params: Promise<{ mailType: st
             return;
           }
 
-          setAcceptedDraft({
-            subject: streamEvent.email.subject,
-            body: streamEvent.email.russianOutput,
-          });
+          setAcceptedDraft(getDraftFromEmail(streamEvent.email));
           setStreamingBody("");
           setConversation(streamEvent.messages ?? []);
           setPendingRounds([]);
@@ -551,6 +574,8 @@ export default function ComposePage({ params }: { params: Promise<{ mailType: st
             content: formatDraftContent(streamEvent.draft.subject, streamEvent.draft.body),
             subject: streamEvent.draft.subject,
             body: streamEvent.draft.body,
+            translatedSubject: streamEvent.draft.translatedSubject,
+            translatedBody: streamEvent.draft.translatedBody,
             createdAt: new Date().toISOString(),
           });
 
@@ -597,6 +622,8 @@ export default function ComposePage({ params }: { params: Promise<{ mailType: st
         content: round.assistantMessage.content,
         subject: round.assistantMessage.subject,
         body: round.assistantMessage.body,
+        translatedSubject: round.assistantMessage.translatedSubject,
+        translatedBody: round.assistantMessage.translatedBody,
         createdAt: round.assistantMessage.createdAt,
       },
     ]);
@@ -612,6 +639,8 @@ export default function ComposePage({ params }: { params: Promise<{ mailType: st
         body: JSON.stringify({
           subject: finalDraft.subject,
           body: finalDraft.body,
+          translatedSubject: finalDraft.translatedSubject,
+          translatedBody: finalDraft.translatedBody,
           messages: persistedMessages,
         }),
       });
@@ -626,7 +655,7 @@ export default function ComposePage({ params }: { params: Promise<{ mailType: st
       }
 
       const data = (await response.json()) as { email: SavedEmail; messages: ConversationMessage[] };
-      setAcceptedDraft({ subject: data.email.subject, body: data.email.russianOutput });
+      setAcceptedDraft(getDraftFromEmail(data.email));
       setConversation((current) => [...current, ...(data.messages ?? [])]);
       setPendingRounds([]);
       setIterationInstruction("");
@@ -778,14 +807,24 @@ export default function ComposePage({ params }: { params: Promise<{ mailType: st
                   : "生成后可直接在下方继续用自然语言让 AI 修改当前版本。"}
               </p>
             </div>
-            <button
-              type="button"
-              disabled={!displayBody}
-              onClick={() => navigator.clipboard.writeText(`Тема: ${displaySubject || "(без темы)"}\n\n${displayBody}`)}
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              复制当前邮件
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={!displayBody}
+                onClick={() => navigator.clipboard.writeText(`Тема: ${displaySubject || "(без темы)"}\n\n${displayBody}`)}
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                复制俄语版
+              </button>
+              <button
+                type="button"
+                disabled={!canCopyChineseDraft}
+                onClick={() => navigator.clipboard.writeText(formatChineseDraftContent(displayTranslatedSubject, displayTranslatedBody))}
+                className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                复制中文版
+              </button>
+            </div>
           </div>
 
           <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
@@ -811,8 +850,24 @@ export default function ComposePage({ params }: { params: Promise<{ mailType: st
                     </span>
                   )}
                 </div>
-                <p className="text-sm font-semibold text-gray-800">Тема: {displaySubject || "(等待生成)"}</p>
-                <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-gray-700">{displayBody || "生成结果会显示在这里。"}</p>
+                <div className="grid gap-4 xl:grid-cols-2">
+                  <div className="rounded-xl border border-blue-100 bg-white p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-700">俄语原稿</p>
+                    <p className="mt-3 text-sm font-semibold text-gray-800">Тема: {displaySubject || "(等待生成)"}</p>
+                    <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-gray-700">{displayBody || "生成结果会显示在这里。"}</p>
+                  </div>
+                  <div className="rounded-xl border border-emerald-100 bg-white p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">中文翻译</p>
+                    {displayTranslatedSubject || displayTranslatedBody ? (
+                      <>
+                        <p className="mt-3 text-sm font-semibold text-gray-800">主题: {displayTranslatedSubject || "（无主题）"}</p>
+                        <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-gray-700">{displayTranslatedBody || "（正文为空）"}</p>
+                      </>
+                    ) : (
+                      <p className="mt-3 text-sm text-gray-400">中文版会在俄语邮件生成完成后显示在这里。</p>
+                    )}
+                  </div>
+                </div>
               </>
             )}
           </div>
@@ -964,6 +1019,12 @@ export default function ComposePage({ params }: { params: Promise<{ mailType: st
                     <div className="mt-3 rounded-xl border border-white/70 bg-white p-4 text-sm leading-7 text-gray-700">
                       <p className="font-semibold text-gray-800">Тема: {message.subject || "(без темы)"}</p>
                       <p className="mt-3 whitespace-pre-wrap">{message.body || message.content}</p>
+                      {(message.translatedSubject?.trim() || message.translatedBody?.trim()) && (
+                        <div className="mt-4 rounded-xl border border-emerald-100 bg-emerald-50/70 p-4">
+                          <p className="font-semibold text-emerald-800">主题: {message.translatedSubject || "（无主题）"}</p>
+                          <p className="mt-3 whitespace-pre-wrap text-gray-700">{message.translatedBody || "（正文为空）"}</p>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-gray-700">{message.content}</p>
