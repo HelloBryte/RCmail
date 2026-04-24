@@ -36,6 +36,7 @@ const YEARLY_FEATURES = [
 export default function PricingPage() {
   const [plan, setPlan] = useState<PlanData | null>(null);
   const [planLoading, setPlanLoading] = useState(true);
+  const [prices, setPrices] = useState<{ monthly: string; yearly: string } | null>(null);
   const [order, setOrder] = useState<OrderData | null>(null);
   const [activePlan, setActivePlan] = useState<"monthly" | "yearly" | null>(null);
   const [loading, setLoading] = useState(false);
@@ -51,6 +52,10 @@ export default function PricingPage() {
 
   useEffect(() => {
     fetchPlan();
+    fetch("/api/billing/prices")
+      .then((r) => r.json())
+      .then((d: { monthly: string; yearly: string }) => setPrices(d))
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -135,7 +140,7 @@ export default function PricingPage() {
 
           <div className="mb-5">
             <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-extrabold text-gray-900">¥14.9</span>
+              <span className="text-4xl font-extrabold text-gray-900">¥{prices?.monthly ?? "--"}</span>
               <span className="text-gray-500">/月</span>
             </div>
             <p className="mt-1 text-sm text-gray-400 line-through">不要 29.9 元</p>
@@ -209,7 +214,7 @@ export default function PricingPage() {
 
           <div className="mb-5">
             <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-extrabold text-gray-900">¥99</span>
+              <span className="text-4xl font-extrabold text-gray-900">¥{prices?.yearly ?? "--"}</span>
               <span className="text-gray-500">/年</span>
             </div>
             <p className="mt-1 text-sm text-gray-400 line-through">不要 199 元</p>
