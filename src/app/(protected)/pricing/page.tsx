@@ -15,13 +15,11 @@ type PlanData = {
 const MONTHLY_FEATURES = [
   "不限字数 实时翻译",
   "极速翻译 响应毫秒级",
-  "专属引擎 AI深度训练",
   "支持多种场合俄语邮件",
 ];
 
 const YEARLY_FEATURES = [
   "不限字数 实时翻译",
-  "极速翻译 专线加速",
   "专属引擎 定制化术语库",
   "多设备同时在线登录",
   "24/7 VIP 专属客服支持",
@@ -101,7 +99,10 @@ export default function PricingPage() {
 
       <div className="grid gap-6 md:grid-cols-2">
         {/* 标准月卡 */}
-        <div className="rounded-2xl border-2 border-gray-200 bg-white p-6 shadow-sm">
+        <div
+          className={`rounded-2xl border-2 border-gray-200 bg-white p-6 shadow-sm transition${!isBusiness ? " cursor-pointer hover:shadow-md" : ""}`}
+          onClick={!isBusiness ? () => handleUpgrade("monthly") : undefined}
+        >
           <div className="mb-5 flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
             <svg className="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -140,13 +141,16 @@ export default function PricingPage() {
               disabled={loading !== null}
               className="w-full rounded-lg border border-blue-600 py-3 text-sm font-semibold text-blue-700 transition hover:bg-blue-50 disabled:opacity-70"
             >
-              {loading === "monthly" ? "生成支付码..." : "立即抢购"}
+              {loading === "monthly" ? "跳转支付中..." : "立即抢购"}
             </button>
           )}
         </div>
 
         {/* 尊享年卡 */}
-        <div className="relative overflow-hidden rounded-2xl border-2 border-blue-500 bg-white p-6 shadow-md">
+        <div
+          className={`relative overflow-hidden rounded-2xl border-2 border-blue-500 bg-white p-6 shadow-md transition${!isBusiness ? " cursor-pointer hover:shadow-xl" : ""}`}
+          onClick={!isBusiness ? () => handleUpgrade("yearly") : undefined}
+        >
           {/* 最受欢迎横幅 */}
           <div className="absolute left-0 right-0 top-0 bg-blue-600 py-1.5 text-center text-xs font-semibold tracking-wide text-white">
             最受欢迎 · 极力推荐
@@ -198,7 +202,7 @@ export default function PricingPage() {
               disabled={loading !== null}
               className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-70"
             >
-              {loading === "yearly" ? "生成支付码..." : "立即省 ¥100 开通 →"}
+              {loading === "yearly" ? "跳转支付中..." : "立即省 ¥100 开通 →"}
             </button>
           )}
         </div>
@@ -207,6 +211,23 @@ export default function PricingPage() {
       {error && (
         <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p>
       )}
+
+      {/* 底部辅助区 */}
+      <div className="flex items-center justify-center gap-6 pt-2 text-sm text-gray-400">
+        <a href="/dashboard" className="flex items-center gap-1 transition hover:text-blue-600">
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          免费试用
+        </a>
+        <span className="text-gray-200">|</span>
+        <a href="mailto:support@rcaimail.com" className="flex items-center gap-1 transition hover:text-blue-600">
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-4l-4 4z" />
+          </svg>
+          联系客服
+        </a>
+      </div>
     </div>
   );
 }
