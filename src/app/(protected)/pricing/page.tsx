@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
 
 type PlanData = {
@@ -9,13 +10,6 @@ type PlanData = {
   trialRemaining: number | null;
   daysRemaining: number | null;
   expiry: string | null;
-};
-
-type OrderData = {
-  urlQrcode: string;
-  url: string;
-  orderId: string;
-  price: string;
 };
 
 const MONTHLY_FEATURES = [
@@ -34,14 +28,12 @@ const YEARLY_FEATURES = [
 ];
 
 export default function PricingPage() {
+  const router = useRouter();
   const [plan, setPlan] = useState<PlanData | null>(null);
   const [planLoading, setPlanLoading] = useState(true);
   const [prices, setPrices] = useState<{ monthly: string; yearly: string } | null>(null);
-  const [order, setOrder] = useState<OrderData | null>(null);
-  const [activePlan, setActivePlan] = useState<"monthly" | "yearly" | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<"monthly" | "yearly" | null>(null);
   const [error, setError] = useState("");
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   function fetchPlan() {
     return fetch("/api/account/plan")
@@ -58,49 +50,31 @@ export default function PricingPage() {
       .catch(() => {});
   }, []);
 
-  useEffect(() => {
-    if (order && plan?.type !== "business") {
-      pollRef.current = setInterval(async () => {
-        const latest = await fetchPlan();
-        if (latest?.type === "business") {
-          clearInterval(pollRef.current!);
-          setOrder(null);
-          setActivePlan(null);
-        }
-      }, 1000);
-    } else {
-      if (pollRef.current) clearInterval(pollRef.current);
-    }
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [order]);
-
   async function handleUpgrade(planType: "monthly" | "yearly") {
-    setLoading(true);
+    setLoading(planType);
     setError("");
-    setOrder(null);
-    setActivePlan(planType);
-
     try {
       const res = await fetch("/api/billing/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ plan: planType }),
       });
-      const data = await res.json();
-
+      const data = await res.json() as { urlQrcode?: string; url?: string; orderId?: string; price?: string; error?: string };
       if (!res.ok || data.error) {
         setError(data.error ?? "下单失败，请稍后重试");
-        setActivePlan(null);
         return;
       }
-
-      setOrder(data);
+      const qs = new URLSearchParams({
+        plan: planType,
+        price: data.price ?? "",
+        qrcode: data.urlQrcode ?? "",
+        orderId: data.orderId ?? "",
+      });
+      router.push(`/checkout?${qs.toString()}`);
     } catch {
       setError("网络错误，请稍后重试");
-      setActivePlan(null);
     } finally {
-      setLoading(false);
+      setLoading(null);
     }
   }
 
@@ -160,30 +134,14 @@ export default function PricingPage() {
               已开通高级套餐
             </div>
           ) : (
-            <>
-              {order && activePlan === "monthly" ? (
-                <div className="space-y-3">
-                  <p className="text-sm text-gray-500">
-                    使用微信扫码支付 <span className="font-semibold text-gray-900">¥{order.price}</span>，支付后自动开通。
-                  </p>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={order.urlQrcode} alt="微信收款码" width={180} height={180} className="rounded-xl border border-gray-200" />
-                  <p className="text-xs text-gray-400">二维码有效期 5 分钟，过期请重新生成。</p>
-                  <button type="button" onClick={() => { setOrder(null); setActivePlan(null); setError(""); }} className="text-xs text-gray-400 underline">
-                    重新生成
-                  </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => handleUpgrade("monthly")}
-                  disabled={loading}
-                  className="w-full rounded-lg border border-blue-600 py-3 text-sm font-semibold text-blue-700 transition hover:bg-blue-50 disabled:opacity-70"
-                >
-                  {loading && activePlan === "monthly" ? "生成支付码..." : "立即抢购"}
-                </button>
-              )}
-            </>
+            <button
+              type="button"
+              onClick={() => handleUpgrade("monthly")}
+              disabled={loading !== null}
+              className="w-full rounded-lg border border-blue-600 py-3 text-sm font-semibold text-blue-700 transition hover:bg-blue-50 disabled:opacity-70"
+            >
+              {loading === "monthly" ? "生成支付码..." : "立即抢购"}
+            </button>
           )}
         </div>
 
@@ -234,33 +192,14 @@ export default function PricingPage() {
               已开通高级套餐
             </div>
           ) : (
-            <>
-              {order && activePlan === "yearly" ? (
-                <div className="space-y-3">
-                  <p className="text-sm text-gray-500">
-                    使用微信扫码支付 <span className="font-semibold text-gray-900">¥{order.price}</span>，支付后自动开通。
-                  </p>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={order.urlQrcode} alt="微信收款码" width={180} height={180} className="rounded-xl border border-gray-200" />
-                  <p className="text-xs text-gray-400">二维码有效期 5 分钟，过期请重新生成。</p>
-                  <button type="button" onClick={() => { setOrder(null); setActivePlan(null); setError(""); }} className="text-xs text-gray-400 underline">
-                    重新生成
-                  </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => handleUpgrade("yearly")}
-                  disabled={loading}
-                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-70"
-                >
-                  {loading && activePlan === "yearly" ? "生成支付码..." : (
-                    <>立即省 ¥100 开通 →</>
-                  )}
-                </button>
-              )}
-              <p className="mt-2 text-center text-xs text-gray-400">* 支付完成立即生效，赠送30天免费时长</p>
-            </>
+            <button
+              type="button"
+              onClick={() => handleUpgrade("yearly")}
+              disabled={loading !== null}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-70"
+            >
+              {loading === "yearly" ? "生成支付码..." : "立即省 ¥100 开通 →"}
+            </button>
           )}
         </div>
       </div>
