@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Mail, Tent, Handshake, CalendarClock, Headphones, DollarSign } from "lucide-react";
 import { MAIL_TYPES } from "@/lib/mail-types";
+import { PromoCountdown } from "@/components/promo-countdown";
 
 const templateMeta: Record<string, { icon: React.ReactNode; colorBg: string; colorText: string; colorHover: string; count: string }> = {
   "exhibition-invitation": {
@@ -87,6 +88,11 @@ export default function Home() {
       <header className="gradient-hero py-16 text-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
+            {/* 限时促销胶囊 */}
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/15 px-4 py-1.5 text-sm font-semibold backdrop-blur-sm">
+              <span>🔥</span>
+              <span>2026春季限时大促：最后三天！</span>
+            </div>
             <h1 className="text-4xl font-extrabold leading-tight md:text-5xl">
               跨越语言障碍，<br />开启中俄贸易新篇章
             </h1>
@@ -125,6 +131,9 @@ export default function Home() {
         </div>
       </header>
 
+      {/* 倒计时 */}
+      <PromoCountdown />
+
       {/* Template Cards */}
       <section className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 lg:px-8" id="templates">
         <div className="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -159,6 +168,109 @@ export default function Home() {
               </Link>
             );
           })}
+        </div>
+      </section>
+
+      {/* 为什么选择我们 */}
+      <section className="bg-gray-50 py-16">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-12 text-center">
+            <h2 className="text-3xl font-bold text-gray-900">为什么选择我们？</h2>
+            <div className="mx-auto mt-3 h-1 w-12 rounded-full bg-blue-600" />
+          </div>
+          <div className="grid gap-10 md:grid-cols-3">
+            {[
+              {
+                icon: (
+                  <svg className="h-10 w-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M18.364 5.636a9 9 0 010 12.728M15.536 8.464a5 5 0 010 7.072M6.343 6.343a9 9 0 000 12.728M9.172 9.172a5 5 0 000 5.656M12 12h.01" />
+                  </svg>
+                ),
+                title: "不限字数",
+                desc: "打破传统按次收费模式，无论是简短询价还是长篇合同，一键生成完整商务俄语邮件，完全无压力。",
+              },
+              {
+                icon: (
+                  <svg className="h-10 w-10 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+                  </svg>
+                ),
+                title: "极速生成",
+                desc: "基于顶尖大模型专线加速，响应毫秒级完成，沟通近乎同步，再也不用等待漫长的加载。",
+              },
+              {
+                icon: (
+                  <svg className="h-10 w-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                ),
+                title: "专属引擎",
+                desc: "针对中俄商务场景深度训练，精准还原行业术语与礼仪规范，杜绝机械式生硬翻译。",
+              },
+            ].map(({ icon, title, desc }) => (
+              <div key={title} className="flex flex-col items-center text-center">
+                <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-blue-50">
+                  {icon}
+                </div>
+                <h3 className="mb-3 text-xl font-bold text-gray-900">{title}</h3>
+                <p className="text-sm leading-relaxed text-gray-500">{desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 用户评价 */}
+      <section className="py-16">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <h2 className="mb-10 text-center text-3xl font-bold text-gray-900">已有 10,000+ 外贸人选择了我们</h2>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {[
+              { name: "陈总", role: "外贸出口企业主", text: "\"2026年最好用的商务俄语工具，没有之一。年卡价格真的良心，帮我完成了好几份大额合同往来邮件。\"" },
+              { name: "Lisa Wang", role: "外企采购经理", text: "\"之前请翻译按字数收费，翻译几份合同好几百块。现在年卡不到100元随便用，真爽！\"" },
+              { name: "张明", role: "独立外贸顾问", text: "\"生成速度极快，专属引擎对俄罗斯商务词汇的理解非常到位，不用我再手动修改了。\"" },
+              { name: "海蓝蓝", role: "跨境电商运营", text: "\"刚好赶上春季大促，99元买了一年，太超值了。推荐给了所有做俄区业务的朋友。\"" },
+            ].map(({ name, role, text }) => (
+              <div key={name} className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                <div className="mb-3 flex gap-0.5 text-orange-400">
+                  {[...Array(5)].map((_, i) => (
+                    <svg key={i} className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  ))}
+                </div>
+                <p className="mb-4 text-sm leading-relaxed text-gray-600">{text}</p>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-700">
+                    {name[0]}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-800">{name}</p>
+                    <p className="text-xs text-gray-400">{role}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 服务保障横幅 */}
+      <section className="bg-blue-600 py-10 text-white">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <h2 className="mb-6 text-center text-2xl font-bold">全方位的服务保障，购后无忧</h2>
+          <div className="flex flex-col items-center justify-center gap-8 md:flex-row md:gap-16">
+            {[
+              { icon: "🛡️", text: "正品保障，稳定续期" },
+              { icon: "↩️", text: "7天无理由，极速退款" },
+              { icon: "🎧", text: "专业客服，1对1指导" },
+            ].map(({ icon, text }) => (
+              <div key={text} className="flex items-center gap-3 text-sm font-medium">
+                <span className="text-xl">{icon}</span>
+                <span>{text}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
