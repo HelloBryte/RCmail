@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
+import { PromoCountdown } from "@/components/promo-countdown";
 
 type PlanData = {
   type: "personal" | "business";
@@ -84,6 +85,8 @@ export default function PricingPage() {
         <h1 className="section-title text-2xl font-bold text-gray-900 sm:text-3xl">选择套餐</h1>
         <p className="mt-2 text-gray-500">升级后立即生效，无限次生成商务俄语邮件。</p>
       </div>
+
+      <PromoCountdown />
 
       {planLoading ? (
         <div className="rounded-xl border border-gray-100 bg-gray-50 px-5 py-4 text-sm text-gray-400">套餐状态加载中…</div>

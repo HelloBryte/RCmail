@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Mail, Tent, Handshake, CalendarClock, Headphones, DollarSign } from "lucide-react";
 import { MAIL_TYPES } from "@/lib/mail-types";
-import { PromoCountdown } from "@/components/promo-countdown";
 import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 
 const templateMeta: Record<string, { icon: React.ReactNode; colorBg: string; colorText: string; colorHover: string; count: string }> = {
@@ -142,9 +141,6 @@ export default function Home() {
           </div>
         </div>
       </header>
-
-      {/* 倒计时 */}
-      <PromoCountdown />
 
       {/* Template Cards */}
       <section className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 lg:px-8" id="templates">
