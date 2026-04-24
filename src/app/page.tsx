@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Mail, Tent, Handshake, CalendarClock, Headphones, DollarSign } from "lucide-react";
 import { MAIL_TYPES } from "@/lib/mail-types";
 import { PromoCountdown } from "@/components/promo-countdown";
+import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 
 const templateMeta: Record<string, { icon: React.ReactNode; colorBg: string; colorText: string; colorHover: string; count: string }> = {
   "exhibition-invitation": {
@@ -68,18 +69,29 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-3">
-            <Link
-              href="/sign-in"
-              className="hidden rounded-full border border-[var(--line)] px-4 py-1.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 md:inline-flex"
-            >
-              登录
-            </Link>
-            <Link
-              href="/sign-up"
-              className="rounded-full bg-blue-700 px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-blue-800"
-            >
-              免费开始
-            </Link>
+            <SignedOut>
+              <Link
+                href="/sign-in"
+                className="hidden rounded-full border border-[var(--line)] px-4 py-1.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 md:inline-flex"
+              >
+                登录
+              </Link>
+              <Link
+                href="/sign-up"
+                className="rounded-full bg-blue-700 px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-blue-800"
+              >
+                免费开始
+              </Link>
+            </SignedOut>
+            <SignedIn>
+              <Link
+                href="/dashboard"
+                className="hidden rounded-full border border-blue-200 bg-blue-50 px-4 py-1.5 text-sm font-semibold text-blue-700 transition hover:bg-blue-100 md:inline-flex"
+              >
+                进入控制台
+              </Link>
+              <UserButton />
+            </SignedIn>
           </div>
         </div>
       </nav>
@@ -288,7 +300,7 @@ export default function Home() {
               <p className="mb-6 max-w-xs text-sm">
                 领先的中俄商务通讯协作平台，致力于消弭语言鸿沟，助力中国品牌走向世界。
               </p>
-              <p className="text-sm text-gray-500">商务合作：support@rcmailai.com</p>
+              <p className="text-sm text-gray-500">商务合作：rcaimail@163.com</p>
             </div>
             <div>
               <h4 className="mb-6 font-bold text-white">产品中心</h4>
@@ -302,7 +314,7 @@ export default function Home() {
               <h4 className="mb-6 font-bold text-white">服务支持</h4>
               <ul className="space-y-4 text-sm">
                 <li><Link href="/history" className="hover:text-white">历史记录</Link></li>
-                <li><a href="mailto:support@rcmailai.com" className="hover:text-white">联系我们</a></li>
+                <li><a href="mailto:rcaimail@163.com" className="hover:text-white">联系我们</a></li>
               </ul>
             </div>
           </div>
