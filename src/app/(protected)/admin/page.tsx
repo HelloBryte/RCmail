@@ -25,24 +25,23 @@ type UserPlan = {
   updatedAt: string | null;
 };
 
-function PlanBadge({ plan }: { plan: UserPlan }) {
+/** 渲染期间不能调用 Date.now()，剩余天数由调用方传入的时间基准计算 */
+function daysUntil(expiry: string | null, now: number): number | null {
+  if (!expiry) return null;
+  return Math.max(0, Math.ceil((new Date(expiry).getTime() - now) / 86400000));
+}
+
+function PlanBadge({ plan, now }: { plan: UserPlan; now: number }) {
   if (plan.planType === "business" && plan.planVariant === "lifetime") {
     return <span className="rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-semibold text-yellow-700">永久卡</span>;
   }
-  if (plan.planType === "business" && plan.planVariant === "yearly") {
-    const expiry = plan.planExpiry ? new Date(plan.planExpiry) : null;
-    const days = expiry ? Math.max(0, Math.ceil((expiry.getTime() - Date.now()) / 86400000)) : null;
-    return <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-semibold text-purple-700">年卡{days !== null ? ` 剩${days}天` : ""}</span>;
-  }
   if (plan.planType === "business" && plan.planVariant === "monthly") {
-    const expiry = plan.planExpiry ? new Date(plan.planExpiry) : null;
-    const days = expiry ? Math.max(0, Math.ceil((expiry.getTime() - Date.now()) / 86400000)) : 0;
+    const days = daysUntil(plan.planExpiry, now) ?? 0;
     return <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">月卡 剩{days}天</span>;
   }
+  // 年卡，以及无 planVariant 的旧数据
   if (plan.planType === "business") {
-    // 兼容旧数据
-    const expiry = plan.planExpiry ? new Date(plan.planExpiry) : null;
-    const days = expiry ? Math.max(0, Math.ceil((expiry.getTime() - Date.now()) / 86400000)) : null;
+    const days = daysUntil(plan.planExpiry, now);
     return <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-semibold text-purple-700">年卡{days !== null ? ` 剩${days}天` : ""}</span>;
   }
   return <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-500">免费</span>;
@@ -54,6 +53,8 @@ export default function AdminPage() {
   const [error, setError] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  // 单次渲染内固定的时间基准，供剩余天数计算使用
+  const [now] = useState(() => Date.now());
 
   useEffect(() => {
     async function load() {
@@ -158,7 +159,7 @@ export default function AdminPage() {
                 <tr key={u.userId} className="hover:bg-gray-50">
                   <td className="py-2.5 pr-4 text-sm text-gray-800">{u.email || <span className="text-gray-400">—</span>}</td>
                   <td className="py-2.5 pr-4 font-mono text-xs text-gray-400">{u.userId.slice(0, 16)}…</td>
-                  <td className="py-2.5 pr-4"><PlanBadge plan={u} /></td>
+                  <td className="py-2.5 pr-4"><PlanBadge plan={u} now={now} /></td>
                   <td className="py-2.5 pr-4 text-gray-600">{u.trialUsed}</td>
                   <td className="py-2.5 pr-4 text-xs text-gray-400">
                     {u.planExpiry ? new Date(u.planExpiry).toLocaleDateString("zh-CN") : "—"}

@@ -46,6 +46,21 @@ export const userPlans = pgTable("user_plans", {
 export type UserPlanRow = typeof userPlans.$inferSelect;
 export type NewUserPlanRow = typeof userPlans.$inferInsert;
 
+/**
+ * 已处理的支付回调。虎皮椒会对同一订单重复推送回调，
+ * 且回调报文可被抓包重放，因此以订单号做去重键保证只生效一次。
+ */
+export const processedPayments = pgTable("processed_payments", {
+  tradeOrderId: text("trade_order_id").primaryKey(),
+  userId: text("user_id").notNull(),
+  planVariant: text("plan_variant").notNull(),
+  totalFee: text("total_fee"),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+});
+
+export type ProcessedPaymentRow = typeof processedPayments.$inferSelect;
+export type NewProcessedPaymentRow = typeof processedPayments.$inferInsert;
+
 export const analyticsEvents = pgTable("analytics_events", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   eventName: text("event_name").notNull(),

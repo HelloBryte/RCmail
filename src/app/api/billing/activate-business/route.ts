@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { trackEvent } from "@/lib/analytics/track-event";
 import { getDb } from "@/lib/db";
 import { userPlans } from "@/lib/db/schema";
+import { extendExpiry } from "@/lib/plans";
 
 export async function POST(req: Request) {
   const startTime = Date.now();
@@ -26,17 +27,20 @@ export async function POST(req: Request) {
   const db = getDb();
   const [existing] = await db.select().from(userPlans).where(eq(userPlans.userId, targetId)).limit(1);
 
+  // 在原有到期时间之后顺延，避免抹掉用户已购买的剩余天数
+  const planExpiry = extendExpiry(existing?.planExpiry, "yearly");
+
   if (!existing) {
     await db.insert(userPlans).values({
       userId: targetId,
       planType: "business",
       planVariant: "yearly",
-      planExpiry: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+      planExpiry,
       trialUsed: 0,
       updatedAt: new Date(),
     });
   } else {
-    await db.update(userPlans).set({ planType: "business", planVariant: "yearly", planExpiry: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), updatedAt: new Date() }).where(eq(userPlans.userId, targetId));
+    await db.update(userPlans).set({ planType: "business", planVariant: "yearly", planExpiry, updatedAt: new Date() }).where(eq(userPlans.userId, targetId));
   }
 
   await trackEvent({
