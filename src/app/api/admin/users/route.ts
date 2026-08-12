@@ -2,6 +2,7 @@ import { auth, clerkClient, currentUser } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import { userPlans } from "@/lib/db/schema";
+import { extendExpiry } from "@/lib/plans";
 
 function isAdminEmail(email: string | null | undefined) {
   const allowList = (process.env.ADMIN_EMAILS ?? "")
@@ -70,18 +71,21 @@ export async function POST(req: Request) {
 
   const db = getDb();
 
+  const [current] = await db.select().from(userPlans).where(eq(userPlans.userId, body.targetUserId)).limit(1);
+
   let planType: string;
   let planVariant: string;
   let planExpiry: Date | null;
 
+  // 发放时段在原有到期时间之后顺延，避免抹掉用户已购买的剩余天数
   if (body.action === "grant_monthly") {
     planType = "business";
     planVariant = "monthly";
-    planExpiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    planExpiry = extendExpiry(current?.planExpiry, "monthly");
   } else if (body.action === "grant_yearly") {
     planType = "business";
     planVariant = "yearly";
-    planExpiry = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+    planExpiry = extendExpiry(current?.planExpiry, "yearly");
   } else if (body.action === "grant_lifetime") {
     planType = "business";
     planVariant = "lifetime";

@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from "crypto";
+import { createHash, randomBytes, timingSafeEqual } from "crypto";
 
 const GATEWAY = "https://api.xunhupay.com/payment/do.html";
 
@@ -90,17 +90,26 @@ export async function createPaymentOrder(opts: {
   };
 }
 
-/** Verify the HMAC signature from 虎皮椒 callback */
+/** 定长比较，避免通过响应时间差逐字节爆破签名 */
+function safeEqual(a: string, b: string): boolean {
+  const bufA = Buffer.from(a, "utf8");
+  const bufB = Buffer.from(b, "utf8");
+  if (bufA.length !== bufB.length) return false;
+  return timingSafeEqual(bufA, bufB);
+}
+
+/** Verify the signature from 虎皮椒 callback */
 export function verifyNotify(
   params: Record<string, string>,
   appSecret: string
 ): boolean {
   const received = params.hash;
   if (!received) return false;
-  const { hash: _hash, ...rest } = params;
+  const rest = { ...params };
+  delete rest.hash;
   const computed = sign(
     Object.fromEntries(Object.entries(rest).filter(([, v]) => v !== "")) as Record<string, string>,
     appSecret
   );
-  return computed === received;
+  return safeEqual(computed, received);
 }

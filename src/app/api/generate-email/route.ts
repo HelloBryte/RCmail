@@ -8,7 +8,7 @@ import { emailMessages, emails } from "@/lib/db/schema";
 import { buildInitialRequestSummary, normalizeThreadMessages, serializeAssistantDraftContent, serializeChineseInput } from "@/lib/email-thread";
 import { isMailTypeSlug, type MailTypeSlug } from "@/lib/mail-types";
 import { buildUserPrompt, isTone, type Tone } from "@/lib/prompts";
-import { buildPlanInfo, getActiveUserPlan, incrementPlanUsageIfNeeded, PERSONAL_LIMIT } from "@/lib/plans";
+import { buildPlanInfo, getActiveUserPlan, PERSONAL_LIMIT, refundGenerationQuota, reserveGenerationQuota } from "@/lib/plans";
 import { splitSubjectAndBody, streamChatCompletionFromQwen, translateBusinessMailToChinese } from "@/lib/qwen";
 
 type RequestBody = {
@@ -41,7 +41,10 @@ export async function POST(req: Request) {
   const db = getDb();
   const plan = await getActiveUserPlan(db, userId);
 
-  if (plan.planType === "personal" && plan.trialUsed >= PERSONAL_LIMIT) {
+  // 先原子性扣减额度再生成，避免并发请求绕过免费额度限制
+  const reservedPlan = await reserveGenerationQuota(db, plan, userId);
+
+  if (!reservedPlan) {
     await trackEvent({
       eventName: "generate_blocked_trial_limit",
       route,
@@ -69,7 +72,23 @@ export async function POST(req: Request) {
   };
 
   const prompt = buildUserPrompt(body.mailType as MailTypeSlug, input);
-  const qwenStream = await streamChatCompletionFromQwen([{ role: "user", content: prompt }]);
+
+  let qwenStream;
+  try {
+    qwenStream = await streamChatCompletionFromQwen([{ role: "user", content: prompt }]);
+  } catch (error) {
+    console.error("Failed to start Qwen stream", error);
+    await refundGenerationQuota(db, reservedPlan, userId);
+    await trackEvent({
+      eventName: "generate_upstream_error",
+      route,
+      userId,
+      statusCode: 502,
+      responseMs: Date.now() - startTime,
+      userAgent,
+    });
+    return Response.json({ error: "UPSTREAM_ERROR", message: "生成失败，请稍后重试。" }, { status: 502 });
+  }
 
   const encoder = new TextEncoder();
   let fullText = "";
@@ -85,6 +104,7 @@ export async function POST(req: Request) {
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "chunk", delta: value })}\n\n`));
         }
       } catch {
+        await refundGenerationQuota(db, reservedPlan, userId);
         controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "error", message: "生成失败" })}\n\n`));
         controller.close();
         return;
@@ -92,6 +112,7 @@ export async function POST(req: Request) {
         reader.releaseLock();
       }
 
+      let emailPersisted = false;
       try {
         const generated = splitSubjectAndBody(fullText);
         const translated = await translateBusinessMailToChinese(generated);
@@ -110,8 +131,10 @@ export async function POST(req: Request) {
               updatedAt: new Date(),
             })
             .returning();
+          emailPersisted = true;
         } catch (error) {
           console.error("Failed to save generated email", error);
+          await refundGenerationQuota(db, reservedPlan, userId);
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "error", message: "保存失败" })}\n\n`));
           controller.close();
           return;
@@ -152,13 +175,7 @@ export async function POST(req: Request) {
           }
         }
 
-        let effectivePlan = plan;
-        try {
-          effectivePlan = await incrementPlanUsageIfNeeded(db, plan, userId);
-        } catch (error) {
-          console.error("Failed to update plan usage after generation", error);
-        }
-
+        const effectivePlan = reservedPlan;
         const planInfo = buildPlanInfo(effectivePlan);
 
         await trackEvent({
@@ -183,6 +200,10 @@ export async function POST(req: Request) {
         );
       } catch (error) {
         console.error("Failed to finalize generated email", error);
+        // 邮件未落库说明本次生成对用户没有产出，退回额度
+        if (!emailPersisted) {
+          await refundGenerationQuota(db, reservedPlan, userId);
+        }
         controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "error", message: "保存失败" })}\n\n`));
       }
 
