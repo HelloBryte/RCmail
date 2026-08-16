@@ -1,0 +1,40 @@
+{
+  "name": "Lakewood Fish & Chips",
+  "tagline": "Takeaway Menu — Open 6 Days",
+  "phone": "9789 5722",
+  "phoneE164": "+61397895722",
+  "address": {
+    "line1": "Shop 1, 300 Heatherhill Road",
+    "suburb": "Frankston",
+    "state": "VIC",
+    "postcode": "3199",
+    "landmark": "Near Shaxton Circle Lake",
+    "_verify_landmark": "Confirm spelling — reads as 'Shaxton Circle' on the menu photo"
+  },
+  "tradingHours": {
+    "_note": "Menu prints 'Tuesday 16:00pm - 8:00pm'. Recorded here as 16:00 (4pm).",
+    "monday": null,
+    "tuesday": { "open": "16:00", "close": "20:00" },
+    "wednesday": { "open": "11:30", "close": "20:00" },
+    "thursday": { "open": "11:30", "close": "20:00" },
+    "friday": { "open": "11:30", "close": "20:30" },
+    "saturday": { "open": "12:00", "close": "20:00" },
+    "sunday": { "open": "12:00", "close": "20:00" }
+  },
+  "policies": {
+    "gstInclusive": true,
+    "pricesSubjectToChange": true,
+    "freeDrinkThreshold": {
+      "minSpend": 55.0,
+      "reward": "Free 1.25L drink",
+      "_verify": "Menu text is partly obscured — confirm the threshold is $55 and not $35/$50"
+    }
+  },
+  "_unknown": [
+    "ABN / registered trading name",
+    "Public email address",
+    "Whether delivery is offered, and the delivery radius",
+    "Payment methods accepted online",
+    "Public holiday hours"
+  ]
+}

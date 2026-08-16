@@ -1,0 +1,143 @@
+{
+  "_source": "Transcribed from the two printed takeaway menu photos. Every price marked \"verify\": true was hard to read (glare, fold, or fading) and MUST be confirmed against the paper menu before go-live.",
+  "currency": "AUD",
+  "gstInclusive": true,
+  "categories": [
+    {
+      "id": "fish",
+      "name": "Fish",
+      "note": "Grilled fish is $0.50 extra",
+      "items": [
+        { "id": "flake",          "name": "Flake",          "price": 9.50 },
+        { "id": "blue-grenadier", "name": "Blue Grenadier", "price": 9.50 },
+        { "id": "whiting",        "name": "Whiting",        "price": 9.50,  "verify": true },
+        { "id": "barramundi",     "name": "Barramundi",     "price": 10.00, "verify": true },
+        { "id": "fish-bite",      "name": "Fish Bite",      "price": 3.00 }
+      ],
+      "_verifyNote": "The price column sits slightly offset from the item names in the photo. Five items, five prices, mapped in order. Whiting is often dearer than flake, so please double-check Whiting and Barramundi."
+    },
+    {
+      "id": "seafood",
+      "name": "Seafood",
+      "items": [
+        { "id": "scallop",       "name": "Scallop",          "price": 3.50 },
+        { "id": "crab-stick",    "name": "Crab Stick",       "price": 2.50 },
+        { "id": "fish-cake",     "name": "Fish Cake",        "price": 3.00 },
+        { "id": "calamari-ring", "name": "Calamari Ring",    "price": 2.00 },
+        { "id": "mussel-batter", "name": "Mussel in Batter", "price": 1.50 },
+        { "id": "prawn-cutlet",  "name": "Prawn Cutlet",     "price": 3.30 }
+      ]
+    },
+    {
+      "id": "snacks",
+      "name": "Snacks",
+      "items": [
+        { "id": "chips",             "name": "Chips (Minimum)",              "price": 5.50 },
+        { "id": "potato-cake",       "name": "Potato Cake",                  "price": 1.60 },
+        { "id": "dim-sim",           "name": "Dim Sim (Steamed or Fried)",   "price": 1.60,
+          "options": [{ "name": "Preparation", "required": true, "choices": ["Steamed", "Fried"] }] },
+        { "id": "dim-sim-batter",    "name": "Dim Sim in Batter",            "price": 2.20 },
+        { "id": "corn-jack",         "name": "Corn Jack",                    "price": 3.00 },
+        { "id": "chiko-roll",        "name": "Chiko Roll",                   "price": 3.00 },
+        { "id": "spring-roll",       "name": "Spring Roll",                  "price": 3.00 },
+        { "id": "sausage-batter",    "name": "Sausage in Batter",            "price": 3.50 },
+        { "id": "hamburger-batter",  "name": "Hamburger in Batter",          "price": 5.00 },
+        { "id": "chicken-nuggets",   "name": "Chicken Nuggets",              "price": 1.10,
+          "bulk": { "qty": 6, "price": 6.00 }, "description": "6 for $6" },
+        { "id": "chicken-croquette", "name": "Chicken Croquette",            "price": 3.00 },
+        { "id": "beef-croquette",    "name": "Beef Croquette",               "price": 3.00 },
+        { "id": "pickled-onion",     "name": "Pickled Onion",                "price": 1.50 }
+      ]
+    },
+    {
+      "id": "burgers",
+      "name": "Burgers",
+      "items": [
+        { "id": "burger-plain",  "name": "Plain Burger",  "price": 9.00,
+          "description": "With lettuce & sauce" },
+        { "id": "burger-lot",    "name": "The Lot",       "price": 13.00,
+          "description": "With lettuce, tomato, egg, bacon, onion, cheese & sauce" },
+        { "id": "burger-fish",   "name": "Fish Burger (Fried Flake)", "price": 12.00,
+          "description": "With lettuce, tomato and mayonnaise sauce" },
+        { "id": "burger-veg",    "name": "Vegetarian Burger (Veggie Patty)", "price": 9.00,
+          "description": "With lettuce, tomato, onion & sauce" },
+        { "id": "egg-bacon-roll","name": "Egg & Bacon Roll", "price": 6.00 },
+        { "id": "egg-bacon-cheese-roll", "name": "Egg, Bacon & Cheese Roll", "price": 6.60 }
+      ]
+    },
+    {
+      "id": "steak-sandwiches",
+      "name": "Steak Sandwiches",
+      "items": [
+        { "id": "steak-plain", "name": "Plain Steak Sandwich", "price": 11.00,
+          "description": "Scotch fillet, lettuce & sauce" },
+        { "id": "steak-lot",   "name": "The Lot",              "price": 15.00,
+          "description": "Scotch fillet with lettuce, tomato, egg, bacon, onion, cheese & sauce" }
+      ]
+    },
+    {
+      "id": "chicken-schnitzel",
+      "name": "Chicken Schnitzel",
+      "_verifyNote": "This whole panel is washed out by glare in the photo. Confirm both names and both prices.",
+      "items": [
+        { "id": "schnitzel-burger", "name": "Chicken Schnitzel Burger", "price": 12.00, "verify": true,
+          "description": "With lettuce, cheese and mayonnaise" },
+        { "id": "schnitzel-plain",  "name": "Plain Chicken Schnitzel",  "price": 9.00,  "verify": true }
+      ]
+    },
+    {
+      "id": "souvlaki",
+      "name": "Souvlaki",
+      "items": [
+        { "id": "souvlaki-lamb",    "name": "Lamb Souvlaki",    "price": 13.00,
+          "description": "With lettuce, tomato, onion & garlic sauce" },
+        { "id": "souvlaki-chicken", "name": "Chicken Souvlaki", "price": 13.00,
+          "description": "With lettuce, tomato, onion & garlic sauce" },
+        { "id": "souvlaki-fish",    "name": "Fish Souvlaki (Fried Flake)", "price": 13.00,
+          "description": "With lettuce, tomato & garlic sauce" },
+        { "id": "souvlaki-veg",     "name": "Vegetarian Souvlaki", "price": 10.00,
+          "description": "With lettuce, tomato, onion & garlic sauce" }
+      ]
+    },
+    {
+      "id": "sweets",
+      "name": "Sweets",
+      "items": [
+        { "id": "pineapple-fritter", "name": "Pineapple Fritter", "price": 3.00 },
+        { "id": "mars-bar-batter",   "name": "Mars Bar in Batter", "price": 5.00 }
+      ]
+    },
+    {
+      "id": "value-packs",
+      "name": "Value Packs",
+      "items": [
+        { "id": "meal-for-one", "name": "Meal For One", "price": 16.00,
+          "contents": ["1 Flake", "1 Potato Cake", "1 Dim Sim", "Minimum Chips"] },
+        { "id": "meal-for-two", "name": "Meal For Two", "price": 28.00,
+          "contents": ["2 Flake", "2 Potato Cake", "2 Dim Sim", "Minimum Chips"] },
+        { "id": "kids-pack", "name": "Kids Pack", "price": 16.00,
+          "contents": ["2 Fish Bites", "2 Potato Cake", "3 Chicken Nuggets", "Minimum Chips"] },
+        { "id": "blue-grenadier-special", "name": "Blue Grenadier Special", "price": 22.00,
+          "contents": ["2 Blue Grenadiers", "Minimum Chips"] },
+        { "id": "small-family-pack", "name": "Small Family Pack", "price": 38.00,
+          "contents": ["3 Flake", "3 Potato Cake", "3 Dim Sim", "Minimum Chips"] },
+        { "id": "large-family-pack", "name": "Large Family Pack", "price": 58.00,
+          "contents": ["4 Flake", "4 Crab Sticks", "4 Potato Cake", "4 Dim Sim", "6 Chips", "1.25L Drink"] },
+        { "id": "seafood-pack", "name": "Seafood Pack", "price": null, "verify": true,
+          "contents": ["2 Flake", "2 Prawn Cutlets", "2 Crab Sticks", "2 Scallops", "2 Calamari Rings", "Minimum Chips"],
+          "_verifyNote": "Price is obscured by glare in the photo — could not be read at all. Needs confirming." }
+      ]
+    }
+  ],
+  "extras": {
+    "_verifyNote": "Printed under the Chicken Schnitzel panel. Confirm whether these apply to all burgers/souvlakis or only to schnitzels.",
+    "genericExtra": 0.60,
+    "pineapple": 0.60
+  },
+  "_missing": [
+    "Drinks — no drinks are listed on the printed menu, but a 1.25L drink features in the Large Family Pack and the $55 promo. Full drinks list with prices and sizes is needed.",
+    "Any allergen or dietary labelling (gluten free, halal, etc.)",
+    "Whether chips come in more than one size (the menu lists only 'Minimum')",
+    "Sauces / gravy / potato scallops and any counter items not on the printed menu"
+  ]
+}
