@@ -109,6 +109,7 @@ for what each variable does.
 ```bash
 npm run dev          # dev server
 npm run build        # production build
+npm run start        # serve the production build
 npm run lint         # eslint
 npm run db:push      # push schema changes to the database
 npm run db:generate  # generate SQL migrations
@@ -140,8 +141,11 @@ src/
 ├── components/            history list, diff view, promo countdown
 ├── lib/
 │   ├── db/                Drizzle schema and connection
+│   ├── analytics/         best-effort event tracking (never blocks a request)
 │   ├── prompts.ts         system + per-mail-type prompts
 │   ├── qwen.ts            DashScope client, SSE parsing, subject/body split
+│   ├── mail-types.ts      the 5 mail-type slugs, titles, summaries
+│   ├── email-thread.ts    thread/message shaping for the compose + iterate flow
 │   ├── plans.ts           plan resolution, quota reservation, expiry math
 │   ├── hupijiao.ts        payment gateway signing and verification
 │   └── text-diff.ts       word-level diff for the revision view
