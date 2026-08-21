@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "node --experimental-strip-types --test src/lib/**/*.test.ts",
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate"
   },
@@ -15,9 +16,9 @@
     "@neondatabase/serverless": "^1.1.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "drizzle-orm": "^0.44.6",
+    "drizzle-orm": "^0.45.2",
     "lucide-react": "^0.547.0",
-    "next": "16.3.1",
+    "next": "16.3.2",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "tailwind-merge": "^3.6.0",
@@ -31,7 +32,7 @@
     "dotenv": "^17.4.2",
     "drizzle-kit": "^0.31.5",
     "eslint": "^9.39.5",
-    "eslint-config-next": "16.3.1",
+    "eslint-config-next": "16.3.2",
     "tailwindcss": "^4.3.3",
     "typescript": "^5"
   }

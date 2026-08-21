@@ -111,6 +111,7 @@ npm run dev          # dev server
 npm run build        # production build
 npm run start        # serve the production build
 npm run lint         # eslint
+npm test             # unit tests (node's built-in test runner)
 npm run db:push      # push schema changes to the database
 npm run db:generate  # generate SQL migrations
 ```
